@@ -1,4 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 
-add_library(lib_util exception/exception.cpp)
+set(
+    SRC
+    exception/exception.cpp
+    string/utils.cpp
+    tree_value/tree_value.cpp
+    tree_value/json_io.cpp
+)
+
+add_library(lib_util ${SRC})
 target_include_directories(lib_util PUBLIC ${PROJECT_SOURCE_DIR})
