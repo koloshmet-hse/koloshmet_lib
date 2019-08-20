@@ -7,5 +7,4 @@ if (DEFINED APPLE)
     link_directories(/usr/local/opt/llvm/lib)
 endif ()
 
-add_library(koloshmet_lib util/exception.cpp)
-target_include_directories(koloshmet_lib PUBLIC ${PROJECT_SOURCE_DIR})
+add_subdirectory(util)
