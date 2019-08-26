@@ -8,3 +8,4 @@ if (DEFINED APPLE)
 endif ()
 
 add_subdirectory(util)
+add_subdirectory(posix)
