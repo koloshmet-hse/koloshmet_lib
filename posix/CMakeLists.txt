@@ -8,4 +8,6 @@ set(
 )
 
 add_library(lib_posix ${SRC})
+target_link_libraries(lib_posix lib_util)
+add_dependencies(lib_posix lib_util)
 target_include_directories(lib_posix PUBLIC ${PROJECT_SOURCE_DIR})

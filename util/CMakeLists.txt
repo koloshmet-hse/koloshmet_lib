@@ -5,7 +5,8 @@ set(
     exception/exception.cpp
     string/utils.cpp
     tree_value/tree_value.cpp
-    tree_value/json_io.cpp
+    io/json_io.cpp
+    io/binary_io.cpp
 )
 
 add_library(lib_util ${SRC})
