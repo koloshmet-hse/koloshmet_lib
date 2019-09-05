@@ -67,6 +67,10 @@ std::string TJsonIO::ToString() const {
     }
 }
 
+TJsonIO::operator std::string() const {
+    return ToString();
+}
+
 namespace {
     namespace {
         template <typename TIterator>
@@ -218,6 +222,6 @@ std::istream& operator>>(std::istream& stream, TJsonIO&& json) {
 }
 
 std::ostream& operator<<(std::ostream& stream, const TJsonIO& json) {
-    stream << json.ToString();
+    stream << static_cast<std::string>(json);
     return stream;
 }

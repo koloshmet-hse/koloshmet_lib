@@ -9,6 +9,9 @@ class TJsonIO {
 public:
     explicit TJsonIO(TTreeValue& value);
 
+    explicit operator std::string() const;
+
+private:
     [[nodiscard]]
     std::string ToString() const;
 
