@@ -7,6 +7,9 @@ set(
     tree_value/tree_value.cpp
     tree_value/json_io.cpp
     io/binary_io.cpp
+    containers/slice.cpp
+    containers/utils.cpp
+    memory/copy_on_move_ref.cpp
 )
 
 add_library(lib_util ${SRC})

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <util/containers/slice.h>
 #include <charconv>
 
 #include <string>
@@ -35,4 +36,38 @@ T FromString(std::string_view str, TParams&&... param) {
     } else {
         return T(str);
     }
+}
+
+template <>
+struct TSlicer<std::string_view> {
+    template <typename TIter>
+    std::string_view operator()(
+        TIter begin,
+        TIter end,
+        std::string_view sequence) const
+    {
+        auto first = std::distance(sequence.begin(), begin);
+        auto len = std::distance(begin, end);
+        return sequence.substr(first, len);
+    }
+};
+
+auto Split(std::string_view seq, std::string_view delim) {
+    auto isDelim = [delim] (auto beg, auto end) {
+        for (auto&& cur : delim) {
+            if (beg == end) {
+                return 1;
+            }
+
+            if (cur != *beg++) {
+                return -1;
+            }
+        }
+
+        if (beg == end) {
+            return 0;
+        }
+        return -1;
+    };
+    return TSlice{std::move(seq), isDelim};
 }
