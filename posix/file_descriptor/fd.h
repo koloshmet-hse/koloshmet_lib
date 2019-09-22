@@ -8,6 +8,8 @@ class IFd {
 public:
     [[nodiscard]]
     virtual int Get() const noexcept = 0;
+
+    virtual ~IFd() = default;
 };
 
 struct TFdCloser {

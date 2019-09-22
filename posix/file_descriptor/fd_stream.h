@@ -11,9 +11,9 @@
 namespace NInternal {
     size_t BuffSize();
 
-    size_t Read(const IFd& fd, void* data, size_t sz);
+    size_t Read(const IFd& fd, std::byte* data, size_t sz);
 
-    size_t Write(const IFd& fd, const void* data, size_t sz);
+    size_t Write(const IFd& fd, const std::byte* data, size_t sz);
 }
 
 template <typename TChar, typename TCloser>
@@ -42,12 +42,26 @@ public:
 
     int sync() override {
         auto start = this->eback();
-        auto rd = NInternal::Read(Fd, start, Size * sizeof(TChar));
+        auto rd = NInternal::Read(Fd, reinterpret_cast<std::byte*>(start), Size * sizeof(TChar));
         this->setg(start, start, start + rd);
         if (rd > 0) {
             return 0;
         }
         return -1;
+    }
+
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        Fd.Reset();
+        Fd = std::move(fd);
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return Fd;
+    }
+
+    void Close() {
+        Fd.Reset();
     }
 
 private:
@@ -84,12 +98,29 @@ public:
 
     int sync() override {
         auto sz = this->pptr() - this->pbase();
-        auto wr = NInternal::Write(Fd, this->pbase(), sz * sizeof(TChar));
-        if (wr > 0) {
-            this->pbump(-wr);
-            return 0;
+        if (sz > 0) {
+            auto wr = NInternal::Write(Fd, reinterpret_cast<std::byte*>(this->pbase()), sz * sizeof(TChar));
+            if (wr > 0) {
+                this->pbump(-wr);
+                return 0;
+            }
+            return -1;
         }
-        return -1;
+        return 0;
+    }
+
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        Fd.Reset();
+        Fd = std::move(fd);
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return Fd;
+    }
+
+    void Close() {
+        Fd.Reset();
     }
 
 private:
@@ -118,7 +149,7 @@ public:
         }
 
         auto start = this->eback();
-        auto rd = NInternal::Read(Fd, start, Size * sizeof(TChar));
+        auto rd = NInternal::Read(Fd, reinterpret_cast<std::byte*>(start), Size * sizeof(TChar));
         this->setg(start, start, start + rd);
 
         if (rd > 0) {
@@ -142,12 +173,29 @@ public:
 
     int sync() override {
         auto sz = this->pptr() - this->pbase();
-        auto wr = NInternal::Write(Fd, this->pbase(), sz * sizeof(TChar));
-        if (wr > 0) {
-            this->pbump(-wr);
-            return 0;
+        if (sz > 0) {
+            auto wr = NInternal::Write(Fd, reinterpret_cast<std::byte*>(this->pbase()), sz * sizeof(TChar));
+            if (wr > 0) {
+                this->pbump(-wr);
+                return 0;
+            }
+            return -1;
         }
-        return -1;
+        return 0;
+    }
+
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        Fd.Reset();
+        Fd = std::move(fd);
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return Fd;
+    }
+
+    void Close() {
+        Fd.Reset();
     }
 
 private:
@@ -164,6 +212,19 @@ public:
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
         this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        StreamBuf.Open(std::move(fd));
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return StreamBuf.IsOpen();
+    }
+
+    void Close() {
+        StreamBuf.Close();
     }
 
 private:
@@ -184,6 +245,21 @@ public:
         this->flush();
     }
 
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        this->flush();
+        StreamBuf.Open(std::move(fd));
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return StreamBuf.IsOpen();
+    }
+
+    void Close() {
+        this->flush();
+        StreamBuf.Close();
+    }
+
 private:
     TBasicOFdStreamBuf<TChar, TCloser> StreamBuf;
 };
@@ -200,6 +276,21 @@ public:
 
     ~TBasicFdStream() override {
         this->flush();
+    }
+
+    void Open(TBasicUniqueFd<TCloser>&& fd) {
+        this->flush();
+        StreamBuf.Open(std::move(fd));
+    }
+
+    [[nodiscard]]
+    bool IsOpen() const {
+        return StreamBuf.IsOpen();
+    }
+
+    void Close() {
+        this->flush();
+        StreamBuf.Close();
     }
 
 private:

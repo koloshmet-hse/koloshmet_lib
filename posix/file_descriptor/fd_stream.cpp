@@ -8,10 +8,10 @@ size_t NInternal::BuffSize() {
     return BUFSIZ;
 }
 
-size_t NInternal::Read(const IFd& fd, void* data, size_t sz) {
+size_t NInternal::Read(const IFd& fd, std::byte* data, size_t sz) {
     return read(fd.Get(), data, sz);
 }
 
-size_t NInternal::Write(const IFd& fd, const void* data, size_t sz) {
+size_t NInternal::Write(const IFd& fd, const std::byte* data, size_t sz) {
     return write(fd.Get(), data, sz);
 }

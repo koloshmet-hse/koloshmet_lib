@@ -5,7 +5,7 @@
 #include <functional>
 
 template <typename TCloser>
-class TBasicUniqueFd : public virtual IFd {
+class TBasicUniqueFd : public IFd {
 public:
     explicit TBasicUniqueFd(int fd) noexcept;
 
@@ -15,7 +15,7 @@ public:
 
     TBasicUniqueFd& operator=(TBasicUniqueFd&& fd) noexcept;
 
-    virtual ~TBasicUniqueFd();
+    ~TBasicUniqueFd() override;
 
     [[nodiscard]]
     int Get() const noexcept override;
@@ -24,6 +24,10 @@ public:
     int Release() noexcept;
 
     void Reset(int fd = -1);
+
+    explicit operator bool() const {
+        return Fd != -1;
+    }
 
 private:
     void Close();
@@ -52,6 +56,7 @@ TBasicUniqueFd<TCloser>::TBasicUniqueFd(TBasicUniqueFd&& fd) noexcept
 
 template <typename TCloser>
 TBasicUniqueFd<TCloser>& TBasicUniqueFd<TCloser>::operator=(TBasicUniqueFd&& fd) noexcept {
+    Close();
     Fd = fd.Fd;
     fd.Fd = -1;
     return *this;
