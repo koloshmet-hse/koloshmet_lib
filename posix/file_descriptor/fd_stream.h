@@ -57,7 +57,7 @@ public:
 
     [[nodiscard]]
     bool IsOpen() const {
-        return Fd;
+        return static_cast<bool>(Fd);
     }
 
     void Close() {
@@ -116,7 +116,7 @@ public:
 
     [[nodiscard]]
     bool IsOpen() const {
-        return Fd;
+        return static_cast<bool>(Fd);
     }
 
     void Close() {
@@ -191,7 +191,7 @@ public:
 
     [[nodiscard]]
     bool IsOpen() const {
-        return Fd;
+        return static_cast<bool>(Fd);
     }
 
     void Close() {
