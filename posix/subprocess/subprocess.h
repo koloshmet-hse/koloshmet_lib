@@ -12,12 +12,28 @@ namespace NInternal {
     std::pair<TUniqueFd, TUniqueFd> Pipe();
 }
 
+namespace {
+    template <typename TType>
+    struct TIsStringView {
+    private:
+        static constexpr void func(...);
+
+        static constexpr char func(std::string_view);
+
+    public:
+        static constexpr bool value = !std::is_void_v<decltype(func(std::declval<TType>()))>;
+    };
+
+    template <typename TType>
+    constexpr bool IsStringView = TIsStringView<TType>::value;
+}
+
 class TSubprocess {
 public:
     template <typename... TArgs>
     explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
         : Executable(executable)
-        , Arguments{executable.string(), std::forward<TArgs>(args)...}
+        , Arguments{executable.string()}
         , PreparedArgs{}
         , InStream{}
         , OutStream{}
@@ -27,6 +43,32 @@ public:
         , ErrFds{NInternal::Pipe()}
         , ChildPid{-1}
     {
+        (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
+        for (auto&& arg : Arguments) {
+            PreparedArgs.push_back(arg.data());
+        }
+        PreparedArgs.push_back(nullptr);
+    }
+
+    template <typename TIter>
+    TSubprocess(
+        const std::filesystem::path& executable,
+        TIter beg,
+        std::enable_if_t<!IsStringView<TIter>, TIter> end)
+        : Executable(executable)
+        , Arguments{executable.string()}
+        , PreparedArgs{}
+        , InStream{}
+        , OutStream{}
+        , ErrStream{}
+        , InFds{NInternal::Pipe()}
+        , OutFds{NInternal::Pipe()}
+        , ErrFds{NInternal::Pipe()}
+        , ChildPid{-1}
+    {
+        while (beg != end) {
+            Arguments.emplace_back(*beg++);
+        }
         for (auto&& arg : Arguments) {
             PreparedArgs.push_back(arg.data());
         }
@@ -38,6 +80,8 @@ public:
     void Execute();
 
     void Wait();
+
+    void Kill();
 
     TOFdStream& In();
 

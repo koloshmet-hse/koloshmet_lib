@@ -15,9 +15,7 @@ std::pair<TUniqueFd, TUniqueFd> NInternal::Pipe() {
 }
 
 TSubprocess::~TSubprocess() {
-    if (ChildPid > 0) {
-        kill(ChildPid, SIGKILL);
-    }
+    Kill();
 }
 
 void TSubprocess::Execute() {
@@ -40,6 +38,12 @@ void TSubprocess::Wait() {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
     ChildPid = -1;
+}
+
+void TSubprocess::Kill() {
+    if (ChildPid > 0) {
+        kill(ChildPid, SIGKILL);
+    }
 }
 
 TOFdStream& TSubprocess::In() {
