@@ -14,6 +14,37 @@ std::pair<TUniqueFd, TUniqueFd> NInternal::Pipe() {
     return {TUniqueFd{fds[0]}, TUniqueFd{fds[1]}};
 }
 
+TSubprocess::TSubprocess(TSubprocess&& other) noexcept
+    : Executable(std::move(other.Executable))
+    , Arguments(std::move(other.Arguments))
+    , PreparedArgs(std::move(other.PreparedArgs))
+    , InStream(std::move(other.InStream))
+    , OutStream(std::move(other.OutStream))
+    , ErrStream(std::move(other.ErrStream))
+    , InFds(std::move(other.InFds))
+    , OutFds(std::move(other.OutFds))
+    , ErrFds(std::move(other.ErrFds))
+    , ChildPid(other.ChildPid)
+{
+    other.ChildPid = -1;
+}
+
+TSubprocess& TSubprocess::operator=(TSubprocess&& other) noexcept {
+    Kill();
+    Executable = std::move(other.Executable);
+    Arguments = std::move(other.Arguments);
+    PreparedArgs = std::move(other.PreparedArgs);
+    InStream = std::move(other.InStream);
+    OutStream = std::move(other.OutStream);
+    ErrStream = std::move(other.ErrStream);
+    InFds = std::move(other.InFds);
+    OutFds = std::move(other.OutFds);
+    ErrFds = std::move(other.ErrFds);
+    ChildPid = other.ChildPid;
+    other.ChildPid = -1;
+    return *this;
+}
+
 TSubprocess::~TSubprocess() {
     Kill();
 }

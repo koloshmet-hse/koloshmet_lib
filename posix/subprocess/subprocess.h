@@ -75,6 +75,10 @@ public:
         PreparedArgs.push_back(nullptr);
     }
 
+    TSubprocess(TSubprocess&& other) noexcept;
+
+    TSubprocess& operator=(TSubprocess&& other) noexcept;
+
     ~TSubprocess();
 
     void Execute();
@@ -93,7 +97,7 @@ private:
     void ForkExec();
 
 private:
-    const std::filesystem::path Executable;
+    std::filesystem::path Executable;
     std::vector<std::string> Arguments;
     std::vector<char*> PreparedArgs;
     std::optional<TOFdStream> InStream;

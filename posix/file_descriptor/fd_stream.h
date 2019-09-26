@@ -29,6 +29,23 @@ public:
         this->setg(start, end, end);
     }
 
+    TBasicIFdStreamBuf(TBasicIFdStreamBuf&& streamBuf) noexcept
+        : Buffer{std::move(streamBuf.Buffer)}
+        , Size{streamBuf.Size}
+        , Fd{std::move(streamBuf.Fd)}
+    {
+        this->setg(Buffer.get(), streamBuf.gptr(), Buffer.get() + Size);
+    }
+
+    TBasicIFdStreamBuf& operator=(TBasicIFdStreamBuf&& streamBuf) noexcept {
+        Buffer = std::move(streamBuf.Buffer);
+        Size = streamBuf.Size;
+        Fd = std::move(streamBuf.Fd);
+        auto start = Buffer.get();
+        auto end = start + Size;
+        this->setg(start, start + std::distance(streamBuf.eback(), streamBuf.gptr()), end);
+    }
+
     int underflow() override {
         if (this->gptr() < this->egptr()) {
             return *this->gptr();
@@ -81,6 +98,27 @@ public:
         auto start = Buffer.get();
         auto end = start + Size - 1;
         this->setp(start, end);
+    }
+
+    TBasicOFdStreamBuf(TBasicOFdStreamBuf&& streamBuf) noexcept
+        : Buffer{std::move(streamBuf.Buffer)}
+        , Size{streamBuf.Size}
+        , Fd{std::move(streamBuf.Fd)}
+    {
+        auto start = Buffer.get();
+        auto end = start + Size - 1;
+        this->setp(start, end);
+        this->pbump(streamBuf.pptr() - streamBuf.pbase());
+    }
+
+    TBasicOFdStreamBuf& operator=(TBasicOFdStreamBuf&& streamBuf) noexcept {
+        Buffer = std::move(streamBuf.Buffer);
+        Size = streamBuf.Size;
+        Fd = std::move(streamBuf.Fd);
+        auto start = Buffer.get();
+        auto end = start + Size - 1;
+        this->setp(start, end);
+        this->pbump(streamBuf.pptr() - streamBuf.pbase());
     }
 
     int overflow(int c) override {
@@ -141,6 +179,29 @@ public:
         auto end = start + Size;
         this->setg(start, end, end);
         this->setp(start, end - 1);
+    }
+
+    TBasicFdStreamBuf(TBasicFdStreamBuf&& streamBuf) noexcept
+        : Buffer{std::move(streamBuf.Buffer)}
+        , Size{streamBuf.Size}
+        , Fd{std::move(streamBuf.Fd)}
+    {
+        auto start = Buffer.get();
+        auto end = start + Size;
+        this->setg(start, start + std::distance(streamBuf.eback(), streamBuf.gptr()), end);
+        this->setp(start, end - 1);
+        this->pbump(streamBuf.pptr() - streamBuf.pbase());
+    }
+
+    TBasicFdStreamBuf& operator=(TBasicFdStreamBuf&& streamBuf) noexcept {
+        Buffer = std::move(streamBuf.Buffer);
+        Size = streamBuf.Size;
+        Fd = std::move(streamBuf.Fd);
+        auto start = Buffer.get();
+        auto end = start + Size;
+        this->setg(start, start + streamBuf.gptr() - streamBuf.eback(), end);
+        this->setp(start, end - 1);
+        this->pbump(streamBuf.pptr() - streamBuf.pbase());
     }
 
     int underflow() override {
@@ -214,6 +275,19 @@ public:
         this->rdbuf(std::addressof(StreamBuf));
     }
 
+    TBasicIFdStream(TBasicIFdStream&& stream) noexcept
+        : std::basic_istream<TChar>{nullptr}
+        , StreamBuf{std::move(stream.StreamBuf)}
+    {
+        this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    TBasicIFdStream& operator=(TBasicIFdStream&& stream) noexcept {
+        StreamBuf = std::move(stream.StreamBuf);
+        this->rdbuf(std::addressof(StreamBuf));
+        return *this;
+    }
+
     void Open(TBasicUniqueFd<TCloser>&& fd) {
         StreamBuf.Open(std::move(fd));
     }
@@ -239,6 +313,19 @@ public:
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
         this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    TBasicOFdStream(TBasicOFdStream&& stream) noexcept
+        : std::basic_ostream<TChar>{nullptr}
+        , StreamBuf{std::move(stream.StreamBuf)}
+    {
+        this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    TBasicOFdStream& operator=(TBasicOFdStream&& stream) noexcept {
+        StreamBuf = std::move(stream.StreamBuf);
+        this->rdbuf(std::addressof(StreamBuf));
+        return *this;
     }
 
     ~TBasicOFdStream() override {
@@ -272,6 +359,19 @@ public:
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
         this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    TBasicFdStream(TBasicFdStream&& stream) noexcept
+        : std::basic_iostream<TChar>{nullptr}
+        , StreamBuf{std::move(stream.StreamBuf)}
+    {
+        this->rdbuf(std::addressof(StreamBuf));
+    }
+
+    TBasicFdStream& operator=(TBasicFdStream&& stream) noexcept {
+        StreamBuf = std::move(stream.StreamBuf);
+        this->rdbuf(std::addressof(StreamBuf));
+        return *this;
     }
 
     ~TBasicFdStream() override {
