@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <algorithm>
 #include <cctype>
 
 std::string ToLower(std::string_view str) {
