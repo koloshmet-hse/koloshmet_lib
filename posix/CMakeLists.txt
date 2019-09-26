@@ -9,7 +9,12 @@ set(
 )
 
 add_library(lib_posix ${SRC})
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    target_link_libraries(lib_posix c++fs)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_link_libraries(lib_posix stdc++fs)
+endif()
+
 target_link_libraries(lib_posix lib_util)
-target_link_libraries(lib_posix c++fs)
 add_dependencies(lib_posix lib_util)
 target_include_directories(lib_posix PUBLIC ${PROJECT_SOURCE_DIR})
