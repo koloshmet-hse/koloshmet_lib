@@ -44,6 +44,7 @@ public:
         auto start = Buffer.get();
         auto end = start + Size;
         this->setg(start, start + std::distance(streamBuf.eback(), streamBuf.gptr()), end);
+        return *this;
     }
 
     int underflow() override {
@@ -119,6 +120,7 @@ public:
         auto end = start + Size - 1;
         this->setp(start, end);
         this->pbump(streamBuf.pptr() - streamBuf.pbase());
+        return *this;
     }
 
     int overflow(int c) override {
@@ -202,6 +204,7 @@ public:
         this->setg(start, start + streamBuf.gptr() - streamBuf.eback(), end);
         this->setp(start, end - 1);
         this->pbump(streamBuf.pptr() - streamBuf.pbase());
+        return *this;
     }
 
     int underflow() override {
