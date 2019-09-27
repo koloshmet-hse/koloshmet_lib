@@ -37,6 +37,7 @@ public:
         Owner = ptr.Owner;
         ptr.Ptr = nullptr;
         ptr.Owner = false;
+        return *this;
     }
 
     const T& operator*() const {

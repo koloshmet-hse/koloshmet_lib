@@ -68,7 +68,6 @@ public:
 
         const TIterator operator++(int) {
             auto res = *this;
-            bool notFound = false;
             while (Elems->Elements.size() <= Iter + 1) {
                 if (!Elems->Next()) {
                     Iter = -1;
