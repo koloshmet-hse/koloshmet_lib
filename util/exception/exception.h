@@ -44,8 +44,8 @@ public:
         , Message{nullptr}
     {
         std::ostringstream stream;
-        stream << arg1 << arg2;
-        (stream << ... << std::forward<TArgs>(args));
+        stream << std::forward<TArg1>(arg1) << std::forward<TArg2>(arg2);
+        (void)(stream << ... << std::forward<TArgs>(args));
         Owner = stream.str();
     }
 

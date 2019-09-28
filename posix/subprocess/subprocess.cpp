@@ -130,3 +130,16 @@ void TSubprocess::ForkExec() {
     OutFds.second.Reset();
     ErrFds.second.Reset();
 }
+
+void TSubprocess::CheckExecutable() const {
+    if (!std::filesystem::exists(Executable)) {
+        throw TException{Executable, " doesn't exists"};
+    }
+    if (!std::filesystem::is_regular_file(Executable)) {
+        throw TException{Executable, " isn't file"};
+    }
+
+    if (access(Executable.c_str(), X_OK) < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+}

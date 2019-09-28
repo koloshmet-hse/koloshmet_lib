@@ -4,6 +4,8 @@
 
 #include <filesystem>
 
+#include <util/exception/exception.h>
+
 #include <string>
 #include <vector>
 #include <optional>
@@ -43,6 +45,7 @@ public:
         , ErrFds{NInternal::Pipe()}
         , ChildPid{-1}
     {
+        CheckExecutable();
         (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
         for (auto&& arg : Arguments) {
             PreparedArgs.push_back(arg.data());
@@ -66,6 +69,7 @@ public:
         , ErrFds{NInternal::Pipe()}
         , ChildPid{-1}
     {
+        CheckExecutable();
         while (beg != end) {
             Arguments.emplace_back(*beg++);
         }
@@ -95,6 +99,8 @@ public:
 
 private:
     void ForkExec();
+
+    void CheckExecutable() const;
 
 private:
     std::filesystem::path Executable;
