@@ -17,22 +17,6 @@ std::string ToUpper(std::string_view str) {
     return res;
 }
 
-auto Split(std::string_view seq, std::string_view delim) {
-    auto isDelim = [delim] (auto beg, auto end) {
-        for (auto&& cur : delim) {
-            if (beg == end) {
-                return 1;
-            }
-
-            if (cur != *beg++) {
-                return -1;
-            }
-        }
-
-        if (beg == end) {
-            return 0;
-        }
-        return -1;
-    };
-    return TSlice{std::move(seq), isDelim};
+TSlice<std::string_view, NInternal::TIsDelim> Split(std::string_view seq, std::string_view delim) {
+    return TSlice{std::move(seq), NInternal::TIsDelim{delim}};
 }

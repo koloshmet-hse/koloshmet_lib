@@ -52,4 +52,28 @@ struct TSlicer<std::string_view> {
     }
 };
 
-auto Split(std::string_view seq, std::string_view delim);
+namespace NInternal {
+    struct TIsDelim {
+        template <typename TIter>
+        int operator()(TIter beg, TIter end) {
+            for (auto&& cur : Delim) {
+                if (beg == end) {
+                    return 1;
+                }
+
+                if (cur != *beg++) {
+                    return -1;
+                }
+            }
+
+            if (beg == end) {
+                return 0;
+            }
+            return -1;
+        }
+
+        std::string_view Delim;
+    };
+}
+
+TSlice<std::string_view, NInternal::TIsDelim> Split(std::string_view seq, std::string_view delim);
