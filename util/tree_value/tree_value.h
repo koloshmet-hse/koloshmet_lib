@@ -42,76 +42,35 @@ public:
         : Value(std::move(json.Value))
     {}
 
-    TTreeValue& operator=(bool b) {
-        Value = std::make_unique<TVariant>(b);
-        return *this;
-    }
+    TTreeValue& operator=(bool b);
 
-    TTreeValue& operator=(long long n) {
-        Value = std::make_unique<TVariant>(n);
-        return *this;
-    }
+    TTreeValue& operator=(long long n);
 
-    TTreeValue& operator=(double d) {
-        Value = std::make_unique<TVariant>(d);
-        return *this;
-    }
+    TTreeValue& operator=(double d);
 
-    TTreeValue& operator=(std::string_view str) {
-        Value = std::make_unique<TVariant>(static_cast<std::string>(str));
-        return *this;
-    }
+    TTreeValue& operator=(std::string_view str);
 
-    TTreeValue& operator=(const TTreeValue& json) {
-        if (json.Value) {
-            Value = std::make_unique<TVariant>(*json.Value);
-        } else {
-            Value = nullptr;
-        }
+    TTreeValue& operator=(const TTreeValue& json);
 
-        return *this;
-    }
+    TTreeValue& operator=(TTreeValue&& json) noexcept;
 
-    TTreeValue& operator=(TTreeValue&& json) noexcept {
-        Value = std::move(json.Value);
-        return *this;
-    }
+    const TTreeValue& operator[](std::string_view sv) const;
 
-    const TTreeValue& operator[](std::string_view sv) const {
-        return std::get<TDict>(*Value).at(static_cast<std::string>(sv));
-    }
+    TTreeValue& operator[](std::string_view sv);
 
-    TTreeValue& operator[](std::string_view sv) {
-        if (!Value) {
-            Value = std::make_unique<TVariant>();
-            Value->emplace<TDict>();
-        }
-        return std::get<TDict>(*Value)[static_cast<std::string>(sv)];
-    }
+    const TTreeValue& operator[](size_t index) const;
 
-    const TTreeValue& operator[](size_t index) const {
-        return std::get<TArray>(*Value).at(index);
-    }
+    TTreeValue& operator[](size_t index);
 
-    TTreeValue& operator[](size_t index) {
-        return std::get<TArray>(*Value).at(index);
-    }
+    void Push(const TTreeValue& json);
 
-    void Push(const TTreeValue& json) {
-        if (!Value) {
-            Value = std::make_unique<TVariant>();
-            Value->emplace<TArray>();
-        }
-        std::get<TArray>(*Value).push_back(json);
-    }
+    void Push(TTreeValue&& json);
 
-    void Push(TTreeValue&& json) {
-        if (!Value) {
-            Value = std::make_unique<TVariant>();
-            Value->emplace<TArray>();
-        }
-        std::get<TArray>(*Value).push_back(std::move(json));
-    }
+    [[nodiscard]]
+    bool Contains(std::string_view key) const;
+
+    [[nodiscard]]
+    bool Contains(size_t index) const;
 
     explicit operator bool() const {
         return std::get<bool>(*Value);
@@ -129,6 +88,7 @@ public:
         return std::get<TString>(*Value);
     }
 
+    [[nodiscard]]
     const TDict& AsDict() const {
         return std::get<TDict>(*Value);
     }
@@ -137,6 +97,7 @@ public:
         return std::get<TDict>(*Value);
     }
 
+    [[nodiscard]]
     const TArray& AsArray() const {
         return std::get<TArray>(*Value);
     }
@@ -145,6 +106,7 @@ public:
         return std::get<TArray>(*Value);
     }
 
+    [[nodiscard]]
     bool Undefined() const {
         return !static_cast<bool>(Value);
     }
