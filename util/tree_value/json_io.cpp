@@ -13,15 +13,15 @@ TJsonIO::TJsonIO(TTreeValue& value)
 
 std::string TJsonIO::ToString() const {
     if (Value.Undefined()) {
-        return "";
+        return {};
     }
-    auto indx = Value.Value->index();
-    switch (indx) {
+
+    switch (Value.Value->index()) {
         case 0: {
             if (std::get<bool>(*Value.Value)) {
-                return "True";
+                return "true";
             } else {
-                return "False";
+                return "false";
             }
         }
         case 1:
