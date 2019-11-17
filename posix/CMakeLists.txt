@@ -6,6 +6,9 @@ set(
     file_descriptor/unique_fd.cpp
     file_descriptor/fd_stream.cpp
     subprocess/subprocess.cpp
+    net/socket.cpp
+        net/socket_pool.cpp
+    net/server.cpp
 )
 
 add_library(lib_posix ${SRC})
