@@ -9,7 +9,8 @@ set(
     io/binary_io.cpp
     containers/slice.cpp
     containers/utils.cpp
-    memory/copy_on_move_ref.cpp
+    memory/move_on_rvalue_ptr.cpp
+    memory/reserve_t.cpp
 )
 
 add_library(lib_util ${SRC})

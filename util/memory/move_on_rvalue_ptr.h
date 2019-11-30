@@ -3,28 +3,28 @@
 #include <memory>
 
 template <typename T>
-class TCopyOnMoveRef {
+class TMoveOnRvaluePtr {
 public:
-    explicit TCopyOnMoveRef(const T& t)
+    explicit TMoveOnRvaluePtr(const T& t)
         : Ptr{std::addressof(t)}
         , Owner{false}
     {}
 
-    explicit TCopyOnMoveRef(T&& t)
+    explicit TMoveOnRvaluePtr(T&& t)
         : Ptr{new T(std::move(t))}
         , Owner{true}
     {}
 
-    ~TCopyOnMoveRef() {
+    ~TMoveOnRvaluePtr() {
         if (Owner) {
             delete Ptr;
         }
     }
 
-    TCopyOnMoveRef(const TCopyOnMoveRef&) = delete;
-    TCopyOnMoveRef& operator=(const TCopyOnMoveRef&) = delete;
+    TMoveOnRvaluePtr(const TMoveOnRvaluePtr&) = delete;
+    TMoveOnRvaluePtr& operator=(const TMoveOnRvaluePtr&) = delete;
 
-    TCopyOnMoveRef(TCopyOnMoveRef&& ptr) noexcept
+    TMoveOnRvaluePtr(TMoveOnRvaluePtr&& ptr) noexcept
         : Ptr{ptr.Ptr}
         , Owner{ptr.Owner}
     {
@@ -32,7 +32,7 @@ public:
         ptr.Owner = false;
     }
 
-    TCopyOnMoveRef& operator=(TCopyOnMoveRef&& ptr) noexcept {
+    TMoveOnRvaluePtr& operator=(TMoveOnRvaluePtr&& ptr) noexcept {
         Ptr = ptr.Ptr;
         Owner = ptr.Owner;
         ptr.Ptr = nullptr;

@@ -82,6 +82,11 @@ public:
         Fd.Reset();
     }
 
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return Fd;
+    }
+
 private:
     std::unique_ptr<TChar[]> Buffer;
     size_t Size;
@@ -161,6 +166,11 @@ public:
 
     void Close() {
         Fd.Reset();
+    }
+
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return Fd;
     }
 
 private:
@@ -262,6 +272,11 @@ public:
         Fd.Reset();
     }
 
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return Fd;
+    }
+
 private:
     std::unique_ptr<TChar[]> Buffer;
     size_t Size;
@@ -302,6 +317,11 @@ public:
 
     void Close() {
         StreamBuf.Close();
+    }
+
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return StreamBuf.GetFd();
     }
 
 private:
@@ -350,6 +370,11 @@ public:
         StreamBuf.Close();
     }
 
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return StreamBuf.GetFd();
+    }
+
 private:
     TBasicOFdStreamBuf<TChar, TCloser> StreamBuf;
 };
@@ -394,6 +419,11 @@ public:
     void Close() {
         this->flush();
         StreamBuf.Close();
+    }
+
+    [[nodiscard]]
+    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+        return StreamBuf.GetFd();
     }
 
 private:
