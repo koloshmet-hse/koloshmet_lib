@@ -1,6 +1,6 @@
 #pragma once
 
-#include <util/memory/copy_on_move_ref.h>
+#include <util/memory/move_on_rvalue_ptr.h>
 
 #include <vector>
 
@@ -173,7 +173,7 @@ private:
 
 private:
     std::vector<TContainer> Elements;
-    TCopyOnMoveRef<TContainer> Seq;
+    TMoveOnRvaluePtr<TContainer> Seq;
     TContainerIt CurIt;
     TSlicer Slicer;
     TIsDelim IsDelim;

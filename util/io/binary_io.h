@@ -5,6 +5,8 @@
 
 template <typename T>
 class TBinaryIO {
+    static_assert(std::is_trivial_v<T> && std::is_standard_layout_v<T>);
+
 public:
     explicit TBinaryIO(T& value)
         : Value{value}
