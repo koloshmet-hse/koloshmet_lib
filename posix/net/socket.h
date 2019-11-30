@@ -44,7 +44,7 @@ public:
     }
 
     [[nodiscard]]
-    ESocket GetType() const;
+    ESocket GetType() const noexcept;
 
 protected:
     std::any SocketAddress;
@@ -63,4 +63,19 @@ public:
     TConnectedSocket(TUniqueFd&& fd, const TSocketAddress& sockAddr);
 
     TConnectedSocket(TUniqueFd&& fd, TSocketAddress&& sockAddr);
+
+    [[nodiscard]]
+    int GetId() const noexcept;
+
+    bool operator==(const TConnectedSocket& other);
+
+    bool operator!=(const TConnectedSocket& other);
+
+private:
+    int Id;
+};
+
+template <>
+struct std::hash<TConnectedSocket> {
+    size_t operator()(const TConnectedSocket& socket) const;
 };

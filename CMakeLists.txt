@@ -11,3 +11,7 @@ endif ()
 
 add_subdirectory(util)
 add_subdirectory(posix)
+
+add_executable(test test.cpp)
+target_link_libraries(test lib_posix)
+add_dependencies(test lib_posix)
