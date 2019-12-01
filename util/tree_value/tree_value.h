@@ -18,20 +18,20 @@ public:
         : Value(nullptr)
     {}
 
-    TTreeValue(bool b)
+    /* implicit */ TTreeValue(bool b)
         : Value(std::make_unique<TVariant>(b))
     {}
 
-    TTreeValue(long long v)
+    /* implicit */ TTreeValue(long long v)
         : Value(std::make_unique<TVariant>(v))
     {}
 
-    TTreeValue(double d)
+    /* implicit */ TTreeValue(double d)
         : Value(std::make_unique<TVariant>(d))
     {}
 
-    TTreeValue(std::string_view str)
-        : Value(std::make_unique<TVariant>(static_cast<std::string>(str)))
+    /* implicit */ TTreeValue(std::string str)
+        : Value(std::make_unique<TVariant>(std::move(str)))
     {}
 
     TTreeValue(const TTreeValue& json)
@@ -48,15 +48,15 @@ public:
 
     TTreeValue& operator=(double d);
 
-    TTreeValue& operator=(std::string_view str);
+    TTreeValue& operator=(std::string str);
 
     TTreeValue& operator=(const TTreeValue& json);
 
     TTreeValue& operator=(TTreeValue&& json) noexcept;
 
-    const TTreeValue& operator[](std::string_view sv) const;
+    const TTreeValue& operator[](const std::string& sv) const;
 
-    TTreeValue& operator[](std::string_view sv);
+    TTreeValue& operator[](const std::string& sv);
 
     const TTreeValue& operator[](size_t index) const;
 
@@ -67,7 +67,7 @@ public:
     void Push(TTreeValue&& json);
 
     [[nodiscard]]
-    bool Contains(std::string_view key) const;
+    bool Contains(const std::string& key) const;
 
     [[nodiscard]]
     bool Contains(size_t index) const;
@@ -84,7 +84,7 @@ public:
         return std::get<double>(*Value);
     }
 
-    explicit operator std::string() const {
+    explicit operator const std::string&() const {
         return std::get<TString>(*Value);
     }
 
