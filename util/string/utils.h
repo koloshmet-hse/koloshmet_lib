@@ -25,10 +25,10 @@ T FromString(std::string_view str, TParams&&... param) {
         T res{};
         std::from_chars(str.data(), str.data() + str.size(), res, std::forward<TParams>(param)...);
         return res;
-    } else if (std::is_floating_point_v<T>) {
+    } else if constexpr (std::is_floating_point_v<T>) {
         if constexpr (std::is_same_v<T, float>) {
             return std::stof(std::string{str});
-        } else if (std::is_same_v<T, double>) {
+        } else if constexpr (std::is_same_v<T, double>) {
             return std::stod(std::string{str});
         } else {
             return std::stold(std::string{str});
