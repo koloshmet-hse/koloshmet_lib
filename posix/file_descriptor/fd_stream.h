@@ -211,7 +211,7 @@ public:
         Fd = std::move(streamBuf.Fd);
         auto start = Buffer.get();
         auto end = start + Size;
-        this->setg(start, start + streamBuf.gptr() - streamBuf.eback(), end);
+        this->setg(start, start + std::distance(streamBuf.eback(), streamBuf.gptr()), end);
         this->setp(start, end - 1);
         this->pbump(streamBuf.pptr() - streamBuf.pbase());
         return *this;
