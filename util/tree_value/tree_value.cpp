@@ -15,8 +15,8 @@ TTreeValue& TTreeValue::operator=(double d) {
     return *this;
 }
 
-TTreeValue& TTreeValue::operator=(std::string_view str) {
-    Value = std::make_unique<TVariant>(static_cast<std::string>(str));
+TTreeValue& TTreeValue::operator=(std::string str) {
+    Value = std::make_unique<TVariant>(std::move(str));
     return *this;
 }
 
@@ -35,16 +35,16 @@ TTreeValue& TTreeValue::operator=(TTreeValue&& json) noexcept {
     return *this;
 }
 
-const TTreeValue& TTreeValue::operator[](std::string_view sv) const {
-    return std::get<TDict>(*Value).at(static_cast<std::string>(sv));
+const TTreeValue& TTreeValue::operator[](const std::string& sv) const {
+    return std::get<TDict>(*Value).at(sv);
 }
 
-TTreeValue& TTreeValue::operator[](std::string_view sv) {
+TTreeValue& TTreeValue::operator[](const std::string& sv) {
     if (!Value) {
         Value = std::make_unique<TVariant>();
         Value->emplace<TDict>();
     }
-    return std::get<TDict>(*Value)[static_cast<std::string>(sv)];
+    return std::get<TDict>(*Value)[sv];
 }
 
 const TTreeValue& TTreeValue::operator[](size_t index) const {
@@ -71,9 +71,9 @@ void TTreeValue::Push(TTreeValue&& json) {
     std::get<TArray>(*Value).push_back(std::move(json));
 }
 
-bool TTreeValue::Contains(std::string_view key) const {
+bool TTreeValue::Contains(const std::string& key) const {
     const auto& dict = AsDict();
-    return dict.find(std::string{key}) != dict.end();
+    return dict.find(key) != dict.end();
 }
 
 bool TTreeValue::Contains(size_t index) const {

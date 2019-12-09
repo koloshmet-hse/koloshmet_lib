@@ -155,7 +155,7 @@ TTreeValue BuildJsonHelper(TIterator first, TIterator last, std::string_view sv)
             auto start = std::distance(sv.begin(), beg) + 1;
             auto len = std::distance(beg, PrevChar(first, colon)) - 1;
 
-            res[sv.substr(start, len)] = BuildJsonHelper(NextChar(colon, comma), PrevChar(colon, comma), sv);
+            res[std::string{sv.substr(start, len)}] = BuildJsonHelper(NextChar(colon, comma), PrevChar(colon, comma), sv);
             first = comma;
         }
         auto colon = FindColon(first, last);
@@ -164,22 +164,19 @@ TTreeValue BuildJsonHelper(TIterator first, TIterator last, std::string_view sv)
         auto start = std::distance(sv.begin(), beg) + 1;
         auto len = std::distance(beg, PrevChar(first, colon)) - 1;
 
-        res[sv.substr(start, len)] = BuildJsonHelper(NextChar(colon, last), PrevChar(colon, last), sv);
+        res[std::string{sv.substr(start, len)}] = BuildJsonHelper(NextChar(colon, last), PrevChar(colon, last), sv);
     } else if (*first == '"' && *last == '"') {
         auto start = std::distance(sv.begin(), std::next(first));
         auto len = std::distance(std::next(first), std::prev(last)) + 1;
-        res = sv.substr(start, len);
+        res = std::string{sv.substr(start, len)};
     } else if (std::isdigit(*first) && std::isdigit(*last)) {
         auto start = std::distance(sv.begin(), first);
         auto len = std::distance(first, last) + 1;
         auto number = sv.substr(start, len);
         if (FindDot(first, last) != last) {
-            double flt = std::stod(static_cast<std::string>(number));
-            res = flt;
+            res = FromString<double>(number);
         } else {
-            long long num = 0;
-            std::from_chars(sv.data() + start, sv.data() + start + len, num);
-            res = num;
+            res = FromString<long long>(number);
         }
     } else {
         auto start = std::distance(sv.begin(), first);
