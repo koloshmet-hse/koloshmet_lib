@@ -14,24 +14,21 @@ enum class EPollEvent : unsigned char {
 
 class TSocketPool {
 public:
-    using TPollEvent = std::unordered_map<TConnectedSocket, EPollEvent>::iterator::value_type;
+    using TPollEvent = std::pair<TConnectedSocket, EPollEvent>;
 
 public:
     TSocketPool();
 
     explicit TSocketPool(size_t capacity);
 
-    const TPollEvent* Get(std::chrono::milliseconds timeout) const;
+    TPollEvent* Get(std::chrono::milliseconds timeout);
 
     void Add(TConnectedSocket&& socket, EPollEvent event);
 
     void Remove(const TConnectedSocket& socket);
 
 private:
-
-
-private:
     mutable std::mutex Mutex;
-    std::unordered_map<TConnectedSocket, EPollEvent> Sockets;
+    std::unordered_map<NInternal::TConnectedSocketHashWrapper, TPollEvent> Sockets;
     mutable std::any PollFds;
 };

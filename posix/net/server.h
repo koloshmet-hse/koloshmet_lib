@@ -1,6 +1,6 @@
 #pragma once
 
-#include <posix/net/socket.h>
+#include <posix/net/replier.h>
 
 #include <filesystem>
 
@@ -12,8 +12,20 @@ public:
 
     TServer(const std::filesystem::path& socketPath, int connects);
 
+    virtual ~TServer() = default;
+
+    void Start(IReplier& replier);
+
+    void Stop();
+
+protected:
+    virtual void Run(IReplier& replier);
+
     TConnectedSocket Accept();
 
 private:
     TSocket Socket;
+
+protected:
+    std::atomic_bool Running;
 };

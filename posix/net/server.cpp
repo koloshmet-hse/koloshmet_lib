@@ -21,6 +21,7 @@ void Listen(TSocket& socket, size_t connects) {
 
 TServer::TServer(int port, int connects)
     : Socket{ESocket::IP}
+    , Running{false}
 {
     auto& sockAddr = Socket.Address<sockaddr_in>();
     sockAddr.sin_family = AF_INET;
@@ -33,6 +34,7 @@ TServer::TServer(int port, int connects)
 
 TServer::TServer(const std::filesystem::path& socketPath, int connects)
     : Socket{ESocket::UNIX}
+    , Running{false}
 {
     auto& sockAddr = Socket.Address<sockaddr_un>();
     sockAddr.sun_family = AF_UNIX;
@@ -40,6 +42,21 @@ TServer::TServer(const std::filesystem::path& socketPath, int connects)
 
     Bind(Socket, sockAddr);
     Listen(Socket, connects);
+}
+
+void TServer::Start(IReplier& replier) {
+    Running = true;
+    this->Run(replier);
+}
+
+void TServer::Stop() {
+    Running = false;
+}
+
+void TServer::Run(IReplier& replier) {
+    while (Running) {
+        replier.Connect(Accept());
+    }
 }
 
 TConnectedSocket TServer::Accept() {

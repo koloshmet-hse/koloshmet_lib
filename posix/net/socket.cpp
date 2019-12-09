@@ -59,18 +59,19 @@ TConnectedSocket::TConnectedSocket(TUniqueFd&& fd, TSocketAddress&& sockAddr)
     , Id{GetFd().Get()}
 {}
 
+TConnectedSocket::TConnectedSocket(TConnectedSocket&& other) noexcept
+    : TFdStream{std::move(dynamic_cast<TFdStream&>(other))}
+    , TSocketAddress{std::move(dynamic_cast<TSocketAddress&>(other))}
+    , Id{other.Id}
+{}
+
+TConnectedSocket& TConnectedSocket::operator=(TConnectedSocket&& other) noexcept {
+    dynamic_cast<TFdStream&>(*this) = std::move(dynamic_cast<TFdStream&>(other));
+    dynamic_cast<TSocketAddress&>(*this) = std::move(dynamic_cast<TSocketAddress&>(other));
+    Id = other.Id;
+    return *this;
+}
+
 int TConnectedSocket::GetId() const noexcept {
     return Id;
-}
-
-bool TConnectedSocket::operator==(const TConnectedSocket& other) {
-    return GetId() == other.GetId();
-}
-
-bool TConnectedSocket::operator!=(const TConnectedSocket& other) {
-    return GetId() != other.GetId();
-}
-
-size_t std::hash<TConnectedSocket>::operator()(const TConnectedSocket& socket) const {
-    return socket.GetId();
 }

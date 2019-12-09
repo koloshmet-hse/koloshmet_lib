@@ -37,12 +37,13 @@ short ConvertEvent(EPollEvent event) {
     }
 }
 
-const TSocketPool::TPollEvent* TSocketPool::Get(std::chrono::milliseconds timeout) const {
+TSocketPool::TPollEvent* TSocketPool::Get(std::chrono::milliseconds timeout) {
     auto& pollFds = AsPollFds(PollFds);
     pollFds.clear();
 
     std::unique_lock lock{Mutex};
-    for (auto&& [socket, event] : Sockets) {
+    for (auto&& [wrapper, pollEvent] : Sockets) {
+        auto&& [socket, event] = pollEvent;
         pollFds.emplace_back();
         pollFds.back().fd = socket.GetFd().Get();
         pollFds.back().events = ConvertEvent(event);
@@ -54,9 +55,15 @@ const TSocketPool::TPollEvent* TSocketPool::Get(std::chrono::milliseconds timeou
     } else if (res == 0) {
         return nullptr;
     } else {
+        lock.lock();
         for (auto&& fd : pollFds) {
-
+            if (auto& pollEvent = Sockets.at(NInternal::TConnectedSocketHashWrapper{fd.fd});
+                fd.revents & ConvertEvent(pollEvent.second))
+            {
+                return std::addressof(pollEvent);
+            }
         }
+        return nullptr;
     }
 }
 
@@ -65,10 +72,11 @@ void TSocketPool::Add(TConnectedSocket&& socket, EPollEvent event) {
     if (AsPollFds(PollFds).capacity() == Sockets.size()) {
         throw TException{"Too many sockets in pool"};
     }
-    Sockets.emplace(std::move(socket), event);
+    NInternal::TConnectedSocketHashWrapper wrapper{socket};
+    Sockets.emplace(wrapper, TPollEvent(std::move(socket), event));
 }
 
 void TSocketPool::Remove(const TConnectedSocket& event) {
     std::lock_guard lock{Mutex};
-    Sockets.erase(event);
+    Sockets.erase(NInternal::TConnectedSocketHashWrapper{event});
 }
