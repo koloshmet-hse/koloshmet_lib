@@ -19,7 +19,7 @@ public:
 public:
     TSocketPool();
 
-    explicit TSocketPool(size_t capacity);
+    explicit TSocketPool(std::size_t capacity);
 
     TPollEvent* Get(std::chrono::milliseconds timeout);
 

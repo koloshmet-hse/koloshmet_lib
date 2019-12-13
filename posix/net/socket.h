@@ -101,7 +101,7 @@ namespace NInternal {
 
 template <>
 struct std::hash<NInternal::TConnectedSocketHashWrapper> {
-    size_t operator()(const NInternal::TConnectedSocketHashWrapper& socket) const {
+    std::size_t operator()(const NInternal::TConnectedSocketHashWrapper& socket) const {
         return IntHash(socket.Id);
     }
 

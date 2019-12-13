@@ -14,7 +14,7 @@ TSocketPool::TSocketPool()
     , PollFds{std::in_place_type_t<std::vector<pollfd>>{}}
 {}
 
-TSocketPool::TSocketPool(size_t capacity)
+TSocketPool::TSocketPool(std::size_t capacity)
     : Sockets{}
     , PollFds{std::in_place_type_t<std::vector<pollfd>>{}}
 {

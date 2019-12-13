@@ -58,9 +58,9 @@ public:
 
     TTreeValue& operator[](const std::string& sv);
 
-    const TTreeValue& operator[](size_t index) const;
+    const TTreeValue& operator[](std::size_t index) const;
 
-    TTreeValue& operator[](size_t index);
+    TTreeValue& operator[](std::size_t index);
 
     void Push(const TTreeValue& json);
 
@@ -70,7 +70,7 @@ public:
     bool Contains(const std::string& key) const;
 
     [[nodiscard]]
-    bool Contains(size_t index) const;
+    bool Contains(std::size_t index) const;
 
     explicit operator bool() const {
         return std::get<bool>(*Value);

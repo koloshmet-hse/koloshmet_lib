@@ -129,7 +129,7 @@ void ReadHeaders(std::istream& stream, std::string& curLine, std::unordered_map<
         std::vector<std::string_view> parts = Split(Prepare(curLine), ": ");
         std::string header(parts.front());
         headers[header].clear();
-        for (size_t indx = 1; indx < parts.size(); ++indx) {
+        for (std::size_t indx = 1; indx < parts.size(); ++indx) {
             headers[header] += parts[indx];
         }
     }

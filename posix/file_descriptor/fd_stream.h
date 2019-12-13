@@ -9,17 +9,17 @@
 #include <memory>
 
 namespace NInternal {
-    size_t BuffSize();
+    std::size_t BuffSize();
 
-    size_t Read(const IFd& fd, std::byte* data, size_t sz);
+    std::size_t Read(const IFd& fd, std::byte* data, std::size_t sz);
 
-    size_t Write(const IFd& fd, const std::byte* data, size_t sz);
+    std::size_t Write(const IFd& fd, const std::byte* data, std::size_t sz);
 }
 
 template <typename TChar, typename TCloser>
 class TBasicIFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    TBasicIFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, size_t buffSize)
+    TBasicIFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size{buffSize}
         , Fd{std::move(fd)}
@@ -89,14 +89,14 @@ public:
 
 private:
     std::unique_ptr<TChar[]> Buffer;
-    size_t Size;
+    std::size_t Size;
     TBasicUniqueFd<TCloser> Fd;
 };
 
 template <typename TChar, typename TCloser>
 class TBasicOFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    TBasicOFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, size_t buffSize)
+    TBasicOFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size(buffSize)
         , Fd{std::move(fd)}
@@ -175,14 +175,14 @@ public:
 
 private:
     std::unique_ptr<TChar[]> Buffer;
-    size_t Size;
+    std::size_t Size;
     TBasicUniqueFd<TCloser> Fd;
 };
 
 template <typename TChar, typename TCloser>
 class TBasicFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    explicit TBasicFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, size_t buffSize)
+    explicit TBasicFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size(buffSize)
         , Fd{std::move(fd)}
@@ -279,7 +279,7 @@ public:
 
 private:
     std::unique_ptr<TChar[]> Buffer;
-    size_t Size;
+    std::size_t Size;
     TBasicUniqueFd<TCloser> Fd;
 };
 

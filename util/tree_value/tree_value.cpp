@@ -47,11 +47,11 @@ TTreeValue& TTreeValue::operator[](const std::string& sv) {
     return std::get<TDict>(*Value)[sv];
 }
 
-const TTreeValue& TTreeValue::operator[](size_t index) const {
+const TTreeValue& TTreeValue::operator[](std::size_t index) const {
     return std::get<TArray>(*Value).at(index);
 }
 
-TTreeValue& TTreeValue::operator[](size_t index) {
+TTreeValue& TTreeValue::operator[](std::size_t index) {
     return std::get<TArray>(*Value).at(index);
 }
 
@@ -76,6 +76,6 @@ bool TTreeValue::Contains(const std::string& key) const {
     return dict.find(key) != dict.end();
 }
 
-bool TTreeValue::Contains(size_t index) const {
+bool TTreeValue::Contains(std::size_t index) const {
     return AsArray().size() > index;
 }

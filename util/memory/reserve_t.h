@@ -4,16 +4,16 @@
 
 class TReserveType {
 public:
-    /* implicit */ constexpr TReserveType(size_t sz) noexcept
+    /* implicit */ constexpr TReserveType(std::size_t sz) noexcept
         : Reserved{sz}
     {}
 
-    /* implicit */ constexpr operator size_t() const noexcept {
+    /* implicit */ constexpr operator std::size_t() const noexcept {
         return Reserved;
     }
 
 private:
-    size_t Reserved;
+    std::size_t Reserved;
 };
 
 constexpr TReserveType operator""_rsrv(unsigned long long sz) {

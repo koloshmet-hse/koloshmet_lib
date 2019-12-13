@@ -13,7 +13,7 @@ void Bind(TSocket& socket, TSocketAddress& socketAddress) {
     }
 }
 
-void Listen(TSocket& socket, size_t connects) {
+void Listen(TSocket& socket, std::size_t connects) {
     if (listen(socket.Get(), connects) < 0) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
