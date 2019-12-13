@@ -11,3 +11,4 @@ endif ()
 
 add_subdirectory(util)
 add_subdirectory(posix)
+add_subdirectory(net)
