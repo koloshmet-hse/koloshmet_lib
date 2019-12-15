@@ -2,22 +2,27 @@
 
 #include <memory>
 
-template <typename T>
+template <typename T, typename TAllocator = std::allocator<T>>
 class TMoveOnRvaluePtr {
 public:
     explicit TMoveOnRvaluePtr(const T& t)
-        : Ptr{std::addressof(t)}
+        : Allocator{}
+        , Ptr{std::addressof(t)}
         , Owner{false}
     {}
 
-    explicit TMoveOnRvaluePtr(T&& t)
-        : Ptr{new T(std::move(t))}
+    explicit TMoveOnRvaluePtr(T&& t, const TAllocator& allocator = TAllocator{})
+        : Allocator{allocator}
+        , Ptr{std::allocator_traits<TAllocator>::allocate(Allocator, 1)}
         , Owner{true}
-    {}
+    {
+        std::allocator_traits<TAllocator>::construct(Allocator, Ptr, std::move(t));
+    }
 
     ~TMoveOnRvaluePtr() {
         if (Owner) {
-            delete Ptr;
+            std::allocator_traits<TAllocator>::destroy(Allocator, Ptr);
+            std::allocator_traits<TAllocator>::deallocate(Allocator, Ptr, 1);
         }
     }
 
@@ -49,6 +54,7 @@ public:
     }
 
 private:
-    const T* Ptr;
+    TAllocator Allocator;
+    T* Ptr;
     bool Owner;
 };

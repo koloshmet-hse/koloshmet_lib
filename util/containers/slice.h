@@ -47,7 +47,7 @@ public:
             : Elems{elems}
             , Iter{pos}
         {
-            while (Elems->Elements.size() <= Iter) {
+            while (static_cast<long long>(Elems->Elements.size()) <= Iter) {
                 if (!Elems->Next()) {
                     Iter = -1;
                     break;
@@ -56,7 +56,7 @@ public:
         }
 
         TIterator& operator++() {
-            while (Elems->Elements.size() <= Iter + 1) {
+            while (Elems->Elements.size() <= static_cast<std::size_t>(Iter + 1)) {
                 if (!Elems->Next()) {
                     Iter = -1;
                     return *this;
@@ -68,7 +68,7 @@ public:
 
         const TIterator operator++(int) {
             auto res = *this;
-            while (Elems->Elements.size() <= Iter + 1) {
+            while (Elems->Elements.size() <= static_cast<std::size_t>(Iter + 1)) {
                 if (!Elems->Next()) {
                     Iter = -1;
                     return res;
