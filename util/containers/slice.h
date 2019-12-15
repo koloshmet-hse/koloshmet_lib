@@ -165,7 +165,12 @@ public:
 
     template <typename TCont>
     /* implicit */ operator TCont() && {
-        return TCont(std::move_iterator{begin()}, std::move_iterator{end()});
+        if constexpr (std::is_same_v<TCont, std::vector<TContainer>>) {
+            std::distance(begin(), end());
+            return std::move(Elements);
+        } else {
+            return TCont(std::move_iterator{begin()}, std::move_iterator{end()});
+        }
     }
 
 private:
