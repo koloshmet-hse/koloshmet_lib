@@ -22,6 +22,14 @@ const std::string& THttpRequestMessage::GetHeader(const std::string& header) con
     return Headers.at(header);
 }
 
+bool THttpRequestMessage::ContainsHeader(const std::string& header) const {
+    return Headers.find(header) != Headers.end();
+}
+
+const std::unordered_map<std::string, std::string>& THttpRequestMessage::GetAllHeaders() const {
+    return Headers;
+}
+
 const std::string& THttpRequestMessage::GetVersion() const {
     return Version;
 }
@@ -62,6 +70,14 @@ const std::string& THttpResponseMessage::GetHeader(const std::string& header) co
     return Headers.at(header);
 }
 
+bool THttpResponseMessage::ContainsHeader(const std::string& header) const {
+    return Headers.find(header) != Headers.end();
+}
+
+const std::unordered_map<std::string, std::string>& THttpResponseMessage::GetAllHeaders() const {
+    return Headers;
+}
+
 const std::string& THttpResponseMessage::GetVersion() const {
     return Version;
 }
@@ -89,24 +105,24 @@ void THttpResponseMessage::SetHeader(const std::string& header, std::string valu
     Headers[header] = std::move(value);
 }
 
-inline void WriteHeaders(std::ostream& stream, const std::unordered_map<std::string, std::string>& headers) {
+void WriteHeaders(std::ostream& stream, const std::unordered_map<std::string, std::string>& headers) {
     for (auto&& [key, value] : headers) {
         stream << key << ':' << ' ' << value << '\r' << '\n';
     }
 }
 // TODO: Encoding/Decoding
 
-std::ostream& THttpRequestMessage::operator<<(std::ostream& stream) {
-    stream << Method << ' ' << Uri << ' ' << Version << '\r' << '\n';
-    WriteHeaders(stream, Headers);
-    stream << '\r' << '\n' << Body;
+std::ostream& operator<<(std::ostream& stream, const THttpRequestMessage& message) {
+    stream << message.GetMethod() << ' ' << message.GetUri() << ' ' << message.GetVersion() << '\r' << '\n';
+    WriteHeaders(stream, message.GetAllHeaders());
+    stream << '\r' << '\n' << message.GetBody();
     return stream;
 }
 
-std::ostream& THttpResponseMessage::operator<<(std::ostream& stream) {
-    stream << Version << ' ' << Status << ' ' << Description << '\r' << '\n';
-    WriteHeaders(stream, Headers);
-    stream << '\r' << '\n' << Body;
+std::ostream& operator<<(std::ostream& stream, const THttpResponseMessage& message) {
+    stream << message.GetVersion() << ' ' << message.GetStatus() << ' ' << message.GetDescription() << '\r' << '\n';
+    WriteHeaders(stream, message.GetAllHeaders());
+    stream << '\r' << '\n' << message.GetBody();
     return stream;
 }
 
@@ -117,7 +133,8 @@ std::string_view Prepare(std::string& curLine) {
     return curLine;
 }
 
-void ReadHeaders(std::istream& stream, std::string& curLine, std::unordered_map<std::string, std::string>& headers) {
+template <typename TMessage>
+void ReadHeaders(std::istream& stream, std::string& curLine, TMessage& message) {
     while (getline(stream, curLine)) {
         if (curLine.size() == 1 && curLine.front() == '\r') {
             break;
@@ -128,22 +145,24 @@ void ReadHeaders(std::istream& stream, std::string& curLine, std::unordered_map<
 
         std::vector<std::string_view> parts = Split(Prepare(curLine), ": ");
         std::string header(parts.front());
-        headers[header].clear();
+        std::string newHeaderValue;
         for (std::size_t indx = 1; indx < parts.size(); ++indx) {
-            headers[header] += parts[indx];
+            newHeaderValue += parts[indx];
         }
+        message.SetBody(std::move(newHeaderValue));
     }
 }
 
-inline void ReadBody(std::istream& stream, std::unordered_map<std::string, std::string>& headers, std::string& body) {
-    if (auto length = headers.find("Content-Length"); length != headers.end()) {
-        auto len = stoul(length->second);
-        body.resize(len);
-        stream.read(body.data(), len);
+template <typename TMessage>
+void ReadBody(std::istream& stream, TMessage& message) {
+    if (message.ContainsHeader("Content-Length")) {
+        std::string body;
+        body.resize(stoul(message.GetHeader("Content-Length")));
+        stream.read(body.data(), body.size());
     }
 }
 
-std::istream& THttpRequestMessage::operator>>(std::istream& stream) {
+std::istream& operator>>(std::istream& stream, THttpRequestMessage& message) {
     std::string curLine;
 
     getline(stream, curLine);
@@ -154,16 +173,16 @@ std::istream& THttpRequestMessage::operator>>(std::istream& stream) {
     if (startParts.size() != 3) {
         throw TException{"Wrong http request start"};
     }
-    Method = startParts[0];
-    Uri = startParts[1];
-    Version = startParts[2];
+    message.SetMethod(std::string{startParts[0]});
+    message.SetUri(std::string{startParts[1]});
+    message.SetVersion(std::string{startParts[2]});
 
-    ReadHeaders(stream, curLine, Headers);
-    ReadBody(stream, Headers, Body);
+    ReadHeaders(stream, curLine, message);
+    ReadBody(stream, message);
     return stream;
 }
 
-std::istream& THttpResponseMessage::operator>>(std::istream& stream) {
+std::istream& operator>>(std::istream& stream, THttpResponseMessage& message) {
     std::string curLine;
 
     getline(stream, curLine);
@@ -172,16 +191,16 @@ std::istream& THttpResponseMessage::operator>>(std::istream& stream) {
     }
     std::vector<std::string_view> startParts = Split(Prepare(curLine), " ");
     if (startParts.size() >= 2 && startParts.size() <= 3) {
-        Version = startParts[0];
-        SetStatus(FromString<unsigned long>(startParts[1]));
+        message.SetVersion(std::string{startParts[0]});
+        message.SetStatus(FromString<unsigned long>(startParts[1]));
         if (startParts.size() == 3) {
-            Description = startParts[2];
+            message.SetDescription(std::string{startParts[2]});
         }
     } else {
         throw TException{"Wrong http request start"};
     }
 
-    ReadHeaders(stream, curLine, Headers);
-    ReadBody(stream, Headers, Body);
+    ReadHeaders(stream, curLine, message);
+    ReadBody(stream, message);
     return stream;
 }

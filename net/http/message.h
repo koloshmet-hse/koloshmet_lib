@@ -22,6 +22,12 @@ public:
     [[nodiscard]]
     const std::string& GetHeader(const std::string& header) const;
 
+    [[nodiscard]]
+    bool ContainsHeader(const std::string& header) const;
+
+    [[nodiscard]]
+    const std::unordered_map<std::string, std::string>& GetAllHeaders() const;
+
     void SetMethod(std::string method);
 
     void SetUri(std::string uri);
@@ -32,10 +38,6 @@ public:
 
     void SetHeader(const std::string& header, std::string value);
 
-    std::istream& operator>>(std::istream& stream);
-
-    std::ostream& operator<<(std::ostream& stream);
-
 private:
     std::unordered_map<std::string, std::string> Headers;
     std::string Method;
@@ -43,6 +45,10 @@ private:
     std::string Version;
     std::string Body;
 };
+
+std::istream& operator>>(std::istream& stream, THttpRequestMessage& message);
+
+std::ostream& operator<<(std::ostream& stream, const THttpRequestMessage& message);
 
 class THttpResponseMessage {
 public:
@@ -61,6 +67,12 @@ public:
     [[nodiscard]]
     const std::string& GetHeader(const std::string& header) const;
 
+    [[nodiscard]]
+    bool ContainsHeader(const std::string& header) const;
+
+    [[nodiscard]]
+    const std::unordered_map<std::string, std::string>& GetAllHeaders() const;
+
     void SetStatus(std::size_t status);
 
     void SetDescription(std::string description);
@@ -71,10 +83,6 @@ public:
 
     void SetHeader(const std::string& header, std::string value);
 
-    std::istream& operator>>(std::istream& stream);
-
-    std::ostream& operator<<(std::ostream& stream);
-
 private:
     std::unordered_map<std::string, std::string> Headers;
     std::size_t Status;
@@ -82,3 +90,7 @@ private:
     std::string Version;
     std::string Body;
 };
+
+std::istream& operator>>(std::istream& stream, THttpResponseMessage& message);
+
+std::ostream& operator<<(std::ostream& stream, const THttpResponseMessage& message);
