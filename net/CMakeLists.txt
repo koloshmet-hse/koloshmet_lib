@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 set(
     SRC
+    coding/url.cpp
     http/message.cpp
 )
 

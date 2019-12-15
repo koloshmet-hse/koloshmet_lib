@@ -1,5 +1,7 @@
 #include "message.h"
 
+#include <net/coding/url.h>
+
 #include <util/string/utils.h>
 
 #include <util/exception/exception.h>
@@ -110,10 +112,9 @@ void WriteHeaders(std::ostream& stream, const std::unordered_map<std::string, st
         stream << key << ':' << ' ' << value << '\r' << '\n';
     }
 }
-// TODO: Encoding/Decoding
 
 std::ostream& operator<<(std::ostream& stream, const THttpRequestMessage& message) {
-    stream << message.GetMethod() << ' ' << message.GetUri() << ' ' << message.GetVersion() << '\r' << '\n';
+    stream << message.GetMethod() << ' ' << UrlEncode(message.GetUri()) << ' ' << message.GetVersion() << '\r' << '\n';
     WriteHeaders(stream, message.GetAllHeaders());
     stream << '\r' << '\n' << message.GetBody();
     return stream;
@@ -174,7 +175,7 @@ std::istream& operator>>(std::istream& stream, THttpRequestMessage& message) {
         throw TException{"Wrong http request start"};
     }
     message.SetMethod(std::string{startParts[0]});
-    message.SetUri(std::string{startParts[1]});
+    message.SetUri(UrlDecode(startParts[1]));
     message.SetVersion(std::string{startParts[2]});
 
     ReadHeaders(stream, curLine, message);
