@@ -10,6 +10,7 @@ set(
     net/socket_pool.cpp
     net/replier.cpp
     net/server.cpp
+    net/client.cpp
 )
 
 add_library(lib_posix ${SRC})

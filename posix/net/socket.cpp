@@ -19,7 +19,7 @@ TUniqueFd AcquireTCPSocket(ESocket socketType) {
             type = PF_INET;
             break;
         case ESocket::UNIX:
-            type = PF_UNIX;
+            type = PF_LOCAL;
             break;
         default:
             throw TException{"Wrong socket type"};

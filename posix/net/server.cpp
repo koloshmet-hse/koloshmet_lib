@@ -37,7 +37,7 @@ TServer::TServer(const std::filesystem::path& socketPath, int connects)
     , Running{false}
 {
     auto& sockAddr = Socket.Address<sockaddr_un>();
-    sockAddr.sun_family = AF_UNIX;
+    sockAddr.sun_family = AF_LOCAL;
     std::strncpy(sockAddr.sun_path, socketPath.c_str(), sizeof(sockAddr.sun_path) - 1);
 
     Bind(Socket, sockAddr);
