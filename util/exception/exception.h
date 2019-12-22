@@ -5,6 +5,8 @@
 #include <sstream>
 #include <string_view>
 
+#include <util/type/utils.h>
+
 class TException : public std::exception {
     template <typename T>
     static constexpr bool IsCStr = std::is_same_v<std::decay_t<T>, const char*>;
@@ -27,7 +29,7 @@ public:
     {}
 
     template <typename TArg>
-    explicit TException(TArg&& arg, std::enable_if_t<!IsCStr<TArg> || !IsArray<TArg>, std::nullptr_t> = nullptr)
+    explicit TException(TArg&& arg, TEmptyEnableIf<!IsCStr<TArg> || !IsArray<TArg>> = nullptr)
         : std::exception{}
         , Owner{}
         , Message{nullptr}
@@ -45,7 +47,7 @@ public:
     {
         std::ostringstream stream;
         stream << std::forward<TArg1>(arg1) << std::forward<TArg2>(arg2);
-        (void)(stream << ... << std::forward<TArgs>(args));
+        Ignore((stream << ... << std::forward<TArgs>(args)));
         Owner = stream.str();
     }
 

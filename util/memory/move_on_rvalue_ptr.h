@@ -38,6 +38,13 @@ public:
     }
 
     TMoveOnRvaluePtr& operator=(TMoveOnRvaluePtr&& ptr) noexcept {
+        if (ptr.Ptr == Ptr) {
+            return *this;
+        }
+        if (Owner) {
+            std::allocator_traits<TAllocator>::destroy(Allocator, Ptr);
+            std::allocator_traits<TAllocator>::deallocate(Allocator, Ptr, 1);
+        }
         Ptr = ptr.Ptr;
         Owner = ptr.Owner;
         ptr.Ptr = nullptr;
