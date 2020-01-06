@@ -1,6 +1,6 @@
 #pragma once
 
-#include <util/containers/slice.h>
+#include <util/container/slice.h>
 
 template <typename TContainer, typename TDelimiter>
 TSlice<TContainer, TDelimiter> Slice(TContainer&& container, const TDelimiter& delimiter) {

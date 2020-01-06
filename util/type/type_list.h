@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <array>
 
 namespace NInternal {
     template <std::size_t Index, typename... TTypes>
@@ -26,4 +27,15 @@ struct TTypeList {
 
     template <std::size_t Index>
     using TGet = typename NInternal::TTypeNode<Index, TTypes...>::type;
+
+    template <typename T>
+    static constexpr std::size_t IndexOf() {
+        constexpr std::array<bool, Size> isSames{std::is_same_v<T, TTypes>...};
+        for (std::size_t i = 0; i < isSames.size(); ++i) {
+            if (isSames[i]) {
+                return i;
+            }
+        }
+        return Size;
+    }
 };

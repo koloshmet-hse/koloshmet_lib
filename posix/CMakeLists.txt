@@ -14,13 +14,6 @@ set(
 )
 
 add_library(lib_posix ${SRC})
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
-        target_link_libraries(lib_posix c++fs)
-    endif()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_link_libraries(lib_posix stdc++fs)
-endif()
 
 target_link_libraries(lib_posix lib_util)
 add_dependencies(lib_posix lib_util)
