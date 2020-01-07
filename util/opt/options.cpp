@@ -2,6 +2,10 @@
 
 #include <util/string/utils.h>
 
+std::size_t TOptions::Size() const {
+    return Parameters.size();
+}
+
 void TOptions::SetValue(TOptions::TElement& elem, std::string_view str) {
     auto visitor = [str](auto&& var) {
         using TType = std::decay_t<decltype(var)>;

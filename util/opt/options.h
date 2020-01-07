@@ -88,6 +88,9 @@ public:
         return std::get<T>(Parameters.at(opt));
     }
 
+    [[nodiscard]]
+    std::size_t Size() const;
+
 private:
     std::vector<std::string_view> InsertArgs(std::size_t argc, char* argv[]);
 
