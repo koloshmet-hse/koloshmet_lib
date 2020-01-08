@@ -11,8 +11,7 @@ namespace NInternal {
     template <template <typename> typename TPredicate, typename... TArgs, std::size_t... Indexes>
     constexpr bool AllOfImpl(std::index_sequence<Indexes...>) {
         bool res = true;
-        (res &= ... &= TPredicate<TGetType<Indexes, TArgs...>>::value);
-        return res;
+        return (res &= ... &= TPredicate<TGetType<Indexes, TArgs...>>::value);
     }
 }
 
