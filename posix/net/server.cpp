@@ -3,7 +3,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+
 #include <util/exception/exception.h>
+
+#include <cstring>
 
 template <typename TSocketAddress>
 void Bind(TSocket& socket, TSocketAddress& socketAddress) {

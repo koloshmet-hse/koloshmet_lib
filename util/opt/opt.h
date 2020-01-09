@@ -70,7 +70,7 @@ struct TParamList {
     using TTypes = TTypeList<TParams...>;
 
     constexpr TParamList(std::initializer_list<std::string_view> names)
-        : Names{names}
+        : Names(names)
     {
         if (names.size() != sizeof...(TParams)) {
             throw TException{"All params must be named"};

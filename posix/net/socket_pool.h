@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <chrono>
+#include <mutex>
 
 enum class EPollEvent : unsigned char {
     IN,

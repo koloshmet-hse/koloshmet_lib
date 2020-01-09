@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <array>
+#include <algorithm>
 #include <cctype>
 
 bool IsSpecial(char c) {

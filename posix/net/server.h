@@ -5,6 +5,7 @@
 #include <filesystem>
 
 #include <any>
+#include <atomic>
 
 class TServer {
 public:
