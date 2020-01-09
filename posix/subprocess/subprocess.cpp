@@ -99,6 +99,18 @@ TIFdStream& TSubprocess::Err() {
     throw TException("No valid error fd");
 }
 
+void TSubprocess::AddEnv(std::string var, std::string_view value) {
+    var += '=';
+    var += value;
+    EnvVars.push_back(std::move(var));
+    PreparedEnv.push_back(EnvVars.back().data());
+}
+
+void TSubprocess::ClearEnv() {
+    EnvVars.clear();
+    PreparedEnv.clear();
+}
+
 void TSubprocess::ForkExec() {
     if ((ChildPid = fork()) < 0) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
@@ -122,7 +134,7 @@ void TSubprocess::ForkExec() {
             }
         }
 
-        if (execve(Executable.c_str(), PreparedArgs.data(), nullptr) < 0) {
+        if (execve(Executable.c_str(), PreparedArgs.data(), PreparedEnv.data()) < 0) {
             throw std::system_error{std::error_code{errno, std::system_category()}};
         }
     }

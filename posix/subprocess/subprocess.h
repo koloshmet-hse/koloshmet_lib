@@ -36,7 +36,9 @@ public:
     explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
         : Executable(executable)
         , Arguments{executable.string()}
+        , EnvVars{}
         , PreparedArgs{}
+        , PreparedEnv{}
         , InStream{}
         , OutStream{}
         , ErrStream{}
@@ -60,7 +62,9 @@ public:
         std::enable_if_t<!IsStringView<TIter>, TIter> end)
         : Executable(executable)
         , Arguments{executable.string()}
+        , EnvVars{}
         , PreparedArgs{}
+        , PreparedEnv{}
         , InStream{}
         , OutStream{}
         , ErrStream{}
@@ -97,6 +101,10 @@ public:
 
     TIFdStream& Err();
 
+    void AddEnv(std::string var, std::string_view value);
+
+    void ClearEnv();
+
 private:
     void ForkExec();
 
@@ -105,7 +113,9 @@ private:
 private:
     std::filesystem::path Executable;
     std::vector<std::string> Arguments;
+    std::vector<std::string> EnvVars;
     std::vector<char*> PreparedArgs;
+    std::vector<char*> PreparedEnv;
     std::optional<TOFdStream> InStream;
     std::optional<TIFdStream> OutStream;
     std::optional<TIFdStream> ErrStream;
