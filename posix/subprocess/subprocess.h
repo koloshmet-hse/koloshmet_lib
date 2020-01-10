@@ -12,9 +12,7 @@
 
 namespace NInternal {
     std::pair<TUniqueFd, TUniqueFd> Pipe();
-}
 
-namespace {
     template <typename TType>
     struct TIsStringView {
     private:
@@ -59,7 +57,7 @@ public:
     TSubprocess(
         const std::filesystem::path& executable,
         TIter beg,
-        std::enable_if_t<!IsStringView<TIter>, TIter> end)
+        std::enable_if_t<!NInternal::IsStringView<TIter>, TIter> end)
         : Executable(executable)
         , Arguments{executable.string()}
         , EnvVars{}

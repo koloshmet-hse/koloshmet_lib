@@ -72,33 +72,31 @@ TJsonIO::operator std::string() const {
 }
 
 namespace {
-    namespace {
-        template <typename TIterator>
-        TIterator FindChar(TIterator beg, TIterator end, char c) {
-            std::vector<char> stack;
-            while (beg != end) {
-                ++beg;
-                if (*beg == '[' || *beg == '{') {
-                    stack.push_back(*beg);
-                } else if (*beg == ']') {
-                    if (!stack.empty() && stack.back() == '[') {
-                        stack.pop_back();
-                    } else {
-                        return beg;
-                    }
-                } else if (*beg == '}') {
-                    if (!stack.empty() && stack.back() == '{') {
-                        stack.pop_back();
-                    } else {
-                        return beg;
-                    }
+    template <typename TIterator>
+    TIterator FindChar(TIterator beg, TIterator end, char c) {
+        std::vector<char> stack;
+        while (beg != end) {
+            ++beg;
+            if (*beg == '[' || *beg == '{') {
+                stack.push_back(*beg);
+            } else if (*beg == ']') {
+                if (!stack.empty() && stack.back() == '[') {
+                    stack.pop_back();
+                } else {
+                    return beg;
                 }
-                if (*beg == c && stack.empty()) {
+            } else if (*beg == '}') {
+                if (!stack.empty() && stack.back() == '{') {
+                    stack.pop_back();
+                } else {
                     return beg;
                 }
             }
-            return end;
+            if (*beg == c && stack.empty()) {
+                return beg;
+            }
         }
+        return end;
     }
 
     template <typename TIterator>
