@@ -5,6 +5,8 @@
 #include <sys/un.h>
 #include <netdb.h>
 
+#include <cstring>
+
 TConnectedSocket NInternal::ConnectIP(const std::string& address, int port) {
     TSocket socket{ESocket::IP};
     auto& sockAddr = socket.Address<sockaddr_in>();

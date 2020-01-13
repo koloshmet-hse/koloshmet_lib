@@ -158,6 +158,7 @@ void ReadBody(std::istream& stream, TMessage& message) {
         std::string body;
         body.resize(stoul(message.GetHeader("Content-Length")));
         stream.read(body.data(), body.size());
+        message.SetBody(std::move(body));
     }
 }
 

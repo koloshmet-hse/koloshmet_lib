@@ -5,8 +5,45 @@
 
 #include <vector>
 
-std::vector<pollfd>& AsPollFds(std::any& pollFds) {
-    return std::any_cast<std::vector<pollfd>&>(pollFds);
+namespace {
+    std::vector<pollfd>& AsPollFds(std::any& pollFds) {
+        return std::any_cast<std::vector<pollfd>&>(pollFds);
+    }
+
+    short ConvertEvent(EPollEvent event) {
+        switch (event) {
+            case EPollEvent::IN:
+                return POLLIN;
+            case EPollEvent::OUT:
+                return POLLOUT;
+            case EPollEvent::ERR:
+                return POLLERR;
+            case EPollEvent::HUP:
+                return POLLHUP;
+            default:
+                return 0;
+        }
+    }
+}
+
+TSocketPool::TEvent::TEvent(short event) noexcept
+    : Event(event)
+{}
+
+bool TSocketPool::TEvent::In() const noexcept {
+    return (Event & static_cast<unsigned short>(POLLIN)) != 0;
+}
+
+bool TSocketPool::TEvent::Out() const noexcept {
+    return (Event & static_cast<unsigned short>(POLLOUT)) != 0;
+}
+
+bool TSocketPool::TEvent::Hup() const noexcept {
+    return (Event & static_cast<unsigned short>(POLLHUP)) != 0;
+}
+
+bool TSocketPool::TEvent::Err() const noexcept {
+    return (Event & static_cast<unsigned short>(POLLERR)) != 0;
 }
 
 TSocketPool::TSocketPool()
@@ -22,22 +59,7 @@ TSocketPool::TSocketPool(std::size_t capacity)
     AsPollFds(PollFds).reserve(capacity);
 }
 
-short ConvertEvent(EPollEvent event) {
-    switch (event) {
-        case EPollEvent::IN:
-            return POLLIN;
-        case EPollEvent::OUT:
-            return POLLOUT;
-        case EPollEvent::ERR:
-            return POLLERR;
-        case EPollEvent::HUP:
-            return POLLHUP;
-        default:
-            return 0;
-    }
-}
-
-TSocketPool::TPollEvent* TSocketPool::Get(std::chrono::milliseconds timeout) {
+std::vector<TSocketPool::TPollEvent> TSocketPool::Get(std::chrono::milliseconds timeout) {
     auto& pollFds = AsPollFds(PollFds);
     pollFds.clear();
 
@@ -47,24 +69,25 @@ TSocketPool::TPollEvent* TSocketPool::Get(std::chrono::milliseconds timeout) {
         pollFds.emplace_back();
         pollFds.back().fd = socket.GetFd().Get();
         pollFds.back().events = ConvertEvent(event);
+        pollFds.back().revents = 0;
     }
     lock.unlock();
 
+    std::vector<TSocketPool::TPollEvent> result;
     if (int res = poll(pollFds.data(), pollFds.size(), timeout.count()); res == -1) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
-    } else if (res == 0) {
-        return nullptr;
-    } else {
+    } else if (res > 0) {
         lock.lock();
+
         for (auto&& fd : pollFds) {
             if (auto& pollEvent = Sockets.at(NInternal::TConnectedSocketHashWrapper{fd.fd});
-                fd.revents & ConvertEvent(pollEvent.second))
+                fd.revents != 0)
             {
-                return std::addressof(pollEvent);
+                result.emplace_back(pollEvent.first, TEvent{fd.revents});
             }
         }
-        return nullptr;
     }
+    return result;
 }
 
 void TSocketPool::Add(TConnectedSocket&& socket, EPollEvent event) {
@@ -73,7 +96,12 @@ void TSocketPool::Add(TConnectedSocket&& socket, EPollEvent event) {
         throw TException{"Too many sockets in pool"};
     }
     NInternal::TConnectedSocketHashWrapper wrapper{socket};
-    Sockets.emplace(wrapper, TPollEvent(std::move(socket), event));
+    Sockets.emplace(wrapper, std::pair{std::move(socket), event});
+}
+
+void TSocketPool::Set(const TConnectedSocket& socket, EPollEvent event) {
+    std::lock_guard lock{Mutex};
+    Sockets.at(NInternal::TConnectedSocketHashWrapper{socket}).second = event;
 }
 
 void TSocketPool::Remove(const TConnectedSocket& event) {
