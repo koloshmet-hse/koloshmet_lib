@@ -8,13 +8,12 @@ set(
     subprocess/subprocess.cpp
     net/socket.cpp
     net/socket_pool.cpp
-    net/replier.cpp
     net/server.cpp
     net/client.cpp
 )
 
 add_library(lib_posix ${SRC})
 
-target_link_libraries(lib_posix lib_util)
-add_dependencies(lib_posix lib_util)
+target_link_libraries(lib_posix lib_async)
+add_dependencies(lib_posix lib_async)
 target_include_directories(lib_posix PUBLIC ${PROJECT_SOURCE_DIR})

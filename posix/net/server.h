@@ -1,32 +1,52 @@
 #pragma once
 
-#include <posix/net/replier.h>
+#include <posix/net/socket.h>
+#include <async/stop_token/stop_token.h>
 
 #include <filesystem>
 
 #include <any>
 #include <atomic>
 
-class TServer {
-public:
-    TServer(int port, int connects);
+namespace NInternal {
+    TConnectedSocket Accept(const TSocket& socket);
 
-    TServer(const std::filesystem::path& socketPath, int connects);
+    void InitIPSocket(TSocket& socket, int port, int connects);
+
+    void InitUNIXSocket(TSocket& socket, const std::filesystem::path& socketPath, int connects);
+}
+
+template <typename TReplier>
+class TServer {
+    static_assert(std::is_invocable_r_v<bool, TReplier, TConnectedSocket>);
+
+public:
+    TServer(TReplier replier, int port, int connects)
+        : Socket{ESocket::IP}
+        , Replier(std::move(replier))
+    {
+        NInternal::InitIPSocket(Socket, port, connects);
+    }
+
+    TServer(TReplier replier, const std::filesystem::path& socketPath, int connects)
+        : Socket{ESocket::UNIX}
+        , Replier(std::move(replier))
+    {
+        NInternal::InitUNIXSocket(Socket, socketPath, connects);
+    }
 
     virtual ~TServer() = default;
 
-    void Start(IReplier& replier);
+public:
+    virtual void operator()() {
+        while (Replier(NInternal::Accept(Socket)));
+    }
 
-    void Stop();
-
-protected:
-    virtual void Run(IReplier& replier);
-
-    TConnectedSocket Accept();
+    virtual void operator()(TStopToken& token) {
+        while (!token && Replier(NInternal::Accept(Socket)));
+    }
 
 private:
     TSocket Socket;
-
-protected:
-    std::atomic_bool Running;
+    TReplier Replier;
 };

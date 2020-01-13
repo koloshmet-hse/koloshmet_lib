@@ -12,23 +12,27 @@ ESocket TSocketAddress::GetType() const noexcept {
     return Type;
 }
 
-TUniqueFd AcquireTCPSocket(ESocket socketType) {
-    int type;
-    switch (socketType) {
-        case ESocket::IP:
-            type = PF_INET;
-            break;
-        case ESocket::UNIX:
-            type = PF_LOCAL;
-            break;
-        default:
-            throw TException{"Wrong socket type"};
+namespace {
+    TUniqueFd AcquireTCPSocket(ESocket socketType) {
+        int type;
+        switch (socketType) {
+            case ESocket::IP:
+                type = PF_INET;
+                break;
+            case ESocket::UNIX:
+                type = PF_LOCAL;
+                break;
+            default:
+                throw TException{"Wrong socket type"};
+        }
+
+        if (int fd = socket(type, SOCK_STREAM, 0); fd != -1) {
+            return TUniqueFd{fd};
+        }
+        throw std::system_error{std::error_code{errno, std::system_category()}};
     }
 
-    if (int fd = socket(type, SOCK_STREAM, 0); fd != -1) {
-        return TUniqueFd{fd};
-    }
-    throw std::system_error{std::error_code{errno, std::system_category()}};
+
 }
 
 TSocket::TSocket(ESocket socketType)
@@ -74,4 +78,34 @@ TConnectedSocket& TConnectedSocket::operator=(TConnectedSocket&& other) noexcept
 
 int TConnectedSocket::GetId() const noexcept {
     return Id;
+}
+
+TConnectedSocket& Reconnect(TConnectedSocket& socket) {
+    sockaddr* addrPtr;
+    std::size_t addrLen;
+    switch (socket.GetType()) {
+        case ESocket::IP:
+            addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_in>());
+            addrLen = sizeof(socket.Address<sockaddr_in>());
+            break;
+        case ESocket::UNIX:
+            addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_un>());
+            addrLen = sizeof(socket.Address<sockaddr_un>());
+            break;
+        default:
+            throw TException{"Wrong socket type"};
+    }
+    if (connect(socket.GetFd().Get(), addrPtr, addrLen) < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    return socket;
+}
+
+TConnectedSocket Connect(TSocket&& socket) {
+    TConnectedSocket connected{
+        std::move(dynamic_cast<TUniqueFd&>(socket)),
+        std::move(dynamic_cast<TSocketAddress&>(socket))
+    };
+    Reconnect(connected);
+    return connected;
 }

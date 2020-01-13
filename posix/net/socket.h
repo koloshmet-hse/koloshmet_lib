@@ -75,6 +75,10 @@ private:
     int Id;
 };
 
+TConnectedSocket Connect(TSocket&& socket);
+
+TConnectedSocket& Reconnect(TConnectedSocket& socket);
+
 namespace NInternal {
     struct TConnectedSocketHashWrapper {
         explicit TConnectedSocketHashWrapper(int id) noexcept
