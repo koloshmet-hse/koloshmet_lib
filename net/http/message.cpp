@@ -148,7 +148,7 @@ void ReadHeaders(std::istream& stream, std::string& curLine, TMessage& message) 
         for (std::size_t indx = 1; indx < parts.size(); ++indx) {
             newHeaderValue += parts[indx];
         }
-        message.SetBody(std::move(newHeaderValue));
+        message.SetHeader(header, std::move(newHeaderValue));
     }
 }
 
