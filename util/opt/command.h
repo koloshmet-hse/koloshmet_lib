@@ -126,8 +126,9 @@ private:
         }
         WrapHelpParam(stream, prm.Name);
         stream << "...";
+        stream << '\n';
         if (sizeof...(opts) > 0) {
-            stream << "\nOptions\n";
+            stream << "Options\n";
         }
         (WrapHelpOption(stream, opts), ...);
         return stream.str();
@@ -146,8 +147,9 @@ private:
         for (auto param : prms.Names) {
             WrapHelpParam(stream, param);
         }
+        stream << '\n';
         if (sizeof...(opts) > 0) {
-            stream << "\nOptions\n";
+            stream << "Options\n";
         }
         (WrapHelpOption(stream, opts), ...);
         return stream.str();
