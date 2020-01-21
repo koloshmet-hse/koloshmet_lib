@@ -1,62 +1,58 @@
 #include "options.h"
 
-#include <util/string/utils.h>
+#include <filesystem>
+
+TOptions::TOptions(int argc, char* argv[], std::initializer_list<TCommand> lst)
+    : Command{}
+    , Executable{GetZeroArg(argc, argv)}
+{
+    if (argc > 0) {
+        std::ostringstream stream;
+        std::filesystem::path path{argv[0]};
+        stream << "Usage\n";
+        stream << '\t' << path.filename().string() << " <command>\n";
+        stream << "Commands\n";
+
+        std::size_t alignSize = 0;
+        for (auto&& command : lst) {
+            alignSize = std::max(alignSize, command.GetName().size());
+            if (argc > 1 && command.GetName() == argv[1]) {
+                Command = command;
+                Command.Init(argc - 2, argv + 2);
+                return;
+            }
+        }
+        stream << std::left;
+        for (auto&& command : lst) {
+            stream << '\t' << std::setw(alignSize);
+            stream << command.GetName();
+            stream << "  " << command.GetDescription() << '\n';
+            if (!command.GetDescription().empty()) {
+                stream << '\n';
+            }
+        }
+        std::cerr << stream.str();
+        std::exit(1);
+    } else {
+        throw TException{"Irrelevant argc"};
+    }
+}
 
 std::size_t TOptions::Size() const {
-    return Parameters.size();
+    return Command.Size();
 }
 
-void TOptions::SetValue(TOptions::TElement& elem, std::string_view str) {
-    auto visitor = [str](auto&& var) {
-        using TType = std::decay_t<decltype(var)>;
-        if constexpr (!std::is_same_v<TType, bool>) {
-            var = FromString<TType>(str);
-        } else {
-            var = true;
-        }
-    };
-    visit(visitor, elem);
+std::string_view TOptions::GetCommand() const {
+    return Command.GetName();
 }
 
-std::vector<std::string_view> TOptions::InsertArgs(std::size_t argc, char* argv[]) {
-    std::vector<std::string_view> otherParams;
-    std::size_t paramsFilled = 0;
-    for (std::size_t i = 0; i < argc; ++i) {
-        std::string_view arg = argv[i];
-        std::string_view key;
-        std::string_view value;
-        if (arg.substr(0, 2) == "--") {
-            std::size_t keyEnd = arg.find('=');
-            if (keyEnd != std::string_view::npos) {
-                value = arg.substr(keyEnd + 1);
-                keyEnd -= 2;
-            }
-            key = arg.substr(2, keyEnd);
-        } else if (arg.front() == '-') {
-            key = arg.substr(1, 1);
-            std::size_t valStart = 2;
-            if (arg.find('=') == 2) {
-                ++valStart;
-            }
-            value = arg.substr(valStart);
-        } else {
-            if (paramsFilled < Parameters.size()) {
-                SetValue(Parameters.at(paramsFilled++), arg);
-            } else {
-                otherParams.push_back(arg);
-            }
-            continue;
-        }
-
-        if (value.empty() && Options.at(key).index() != TElementTypes::IndexOf<bool>() && i < argc - 1) {
-            value = argv[++i];
-        }
-
-        SetValue(Options.at(key), value);
+std::string_view TOptions::GetZeroArg(int argc, char* argv[]) {
+    if (argc > 0) {
+        return argv[0];
     }
-    return otherParams;
+    throw TException{"Irrelevant argc"};
 }
 
-void TOptions::WrapHelpParam(std::ostream& stream, std::string_view str) {
-    stream << ' ' << str;
+const std::filesystem::path& TOptions::GetExecutable() const {
+    return Executable;
 }

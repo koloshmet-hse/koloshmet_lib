@@ -15,6 +15,7 @@ set(
     container/slice.cpp
     container/utils.cpp
     opt/opt.cpp
+    opt/command.cpp
     opt/options.cpp
 )
 
