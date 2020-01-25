@@ -175,7 +175,7 @@ private:
         if (!opt.Required) {
             if constexpr (std::is_same_v<TOption, std::string_view>) {
                 if (!opt.Default.empty()) {
-                    stream << " = " << opt.Default;
+                    stream << " = " << std::quoted(opt.Default);
                 }
             } else {
                 stream << " = " << opt.Default;
