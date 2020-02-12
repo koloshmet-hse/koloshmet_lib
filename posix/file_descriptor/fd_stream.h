@@ -1,20 +1,12 @@
 #pragma once
 
-#include "unique_fd.h"
+#include <posix/file_descriptor/syscalls.h>
 
 #include <istream>
 #include <ostream>
 #include <streambuf>
 
 #include <memory>
-
-namespace NInternal {
-    std::size_t BuffSize();
-
-    std::size_t Read(const IFd& fd, std::byte* data, std::size_t sz);
-
-    std::size_t Write(const IFd& fd, const std::byte* data, std::size_t sz);
-}
 
 template <typename TChar, typename TCloser>
 class TBasicIFdStreamBuf : public std::basic_streambuf<TChar> {

@@ -4,6 +4,7 @@ set(
     SRC
     file_descriptor/fd.cpp
     file_descriptor/unique_fd.cpp
+    file_descriptor/syscalls.cpp
     file_descriptor/fd_stream.cpp
     subprocess/subprocess.cpp
     net/socket.cpp

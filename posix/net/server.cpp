@@ -43,6 +43,12 @@ void NInternal::InitUNIXSocket(TSocket& socket, const std::filesystem::path& soc
     Listen(socket, connects);
 }
 
+void NInternal::ReleaseUnixAddress(TSocket& socket) {
+    auto& sockAddr = socket.Address<sockaddr_un>();
+    std::filesystem::path unixAddress = sockAddr.sun_path;
+    remove(unixAddress);
+}
+
 TConnectedSocket NInternal::Accept(const TSocket& socket) {
     int fd;
     TSocketAddress sockAddr{socket.GetType()};
