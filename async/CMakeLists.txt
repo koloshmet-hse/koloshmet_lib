@@ -5,7 +5,7 @@ set(
     stop_token/stop_token.cpp
 )
 
-add_library(lib_async ${SRC})
-target_link_libraries(lib_async lib_util)
-add_dependencies(lib_async lib_util)
-target_include_directories(lib_async PUBLIC ${PROJECT_SOURCE_DIR})
+add_library(k_async ${SRC})
+target_link_libraries(k_async k_util)
+add_dependencies(k_async k_util)
+target_include_directories(k_async PUBLIC ${PROJECT_SOURCE_DIR})

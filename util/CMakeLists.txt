@@ -19,13 +19,13 @@ set(
     opt/options.cpp
 )
 
-add_library(lib_util ${SRC})
+add_library(k_util ${SRC})
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
-        target_link_libraries(lib_util c++fs)
+        target_link_libraries(k_util c++fs)
     endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_link_libraries(lib_util stdc++fs)
+    target_link_libraries(k_util stdc++fs)
 endif()
 
-target_include_directories(lib_util PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(k_util PUBLIC ${PROJECT_SOURCE_DIR})

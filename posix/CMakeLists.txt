@@ -12,8 +12,8 @@ set(
     net/client.cpp
 )
 
-add_library(lib_posix ${SRC})
+add_library(k_posix ${SRC})
 
-target_link_libraries(lib_posix lib_async)
-add_dependencies(lib_posix lib_async)
-target_include_directories(lib_posix PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(k_posix k_async)
+add_dependencies(k_posix k_async)
+target_include_directories(k_posix PUBLIC ${PROJECT_SOURCE_DIR})

@@ -6,7 +6,7 @@ set(
     http/message.cpp
 )
 
-add_library(lib_net ${SRC})
-target_link_libraries(lib_net lib_util)
-add_dependencies(lib_net lib_util)
-target_include_directories(lib_net PUBLIC ${PROJECT_SOURCE_DIR})
+add_library(k_net ${SRC})
+target_link_libraries(k_net k_util)
+add_dependencies(k_net k_util)
+target_include_directories(k_net PUBLIC ${PROJECT_SOURCE_DIR})
