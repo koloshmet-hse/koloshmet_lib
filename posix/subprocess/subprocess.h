@@ -10,38 +10,25 @@
 #include <vector>
 #include <optional>
 
-namespace NInternal {
-    template <typename TType>
-    struct TIsStringView {
-    private:
-        static constexpr void func(...);
-
-        static constexpr char func(std::string_view);
-
-    public:
-        static constexpr bool value = !std::is_void_v<decltype(func(std::declval<TType>()))>;
-    };
-
-    template <typename TType>
-    constexpr bool IsStringView = TIsStringView<TType>::value;
-}
-
 class TSubprocess {
 public:
+    template <typename TType>
+    static constexpr bool IsStringView = std::is_convertible_v<TType, std::string_view>;
+
     template <typename... TArgs>
     explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
-        : Executable(executable)
-        , Arguments{executable.string()}
-        , EnvVars{}
-        , PreparedArgs{}
-        , PreparedEnv{}
-        , InStream{}
-        , OutStream{}
-        , ErrStream{}
-        , InFds{NInternal::Pipe()}
-        , OutFds{NInternal::Pipe()}
-        , ErrFds{NInternal::Pipe()}
-        , ChildPid{-1}
+            : Executable(executable)
+            , Arguments{executable.string()}
+            , EnvVars{}
+            , PreparedArgs{}
+            , PreparedEnv{}
+            , InStream{}
+            , OutStream{}
+            , ErrStream{}
+            , InFds{NInternal::Pipe()}
+            , OutFds{NInternal::Pipe()}
+            , ErrFds{NInternal::Pipe()}
+            , ChildPid{-1}
     {
         CheckExecutable();
         (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
@@ -51,11 +38,9 @@ public:
         PreparedArgs.push_back(nullptr);
     }
 
-    template <typename TIter>
-    TSubprocess(
-        const std::filesystem::path& executable,
-        TIter beg,
-        std::enable_if_t<!NInternal::IsStringView<TIter>, TIter> end)
+
+    template <typename TContainer, typename = TEmptyEnableIf<!IsStringView<TContainer>>>
+    explicit TSubprocess(const std::filesystem::path& executable, TContainer&& args)
         : Executable(executable)
         , Arguments{executable.string()}
         , EnvVars{}
@@ -70,13 +55,100 @@ public:
         , ChildPid{-1}
     {
         CheckExecutable();
-        while (beg != end) {
-            Arguments.emplace_back(*beg++);
+        for (auto&& arg : args) {
+            Arguments.emplace_back(std::move(arg));
         }
         for (auto&& arg : Arguments) {
             PreparedArgs.push_back(arg.data());
         }
         PreparedArgs.push_back(nullptr);
+    }
+
+    template <typename TContainer, typename TEnvContainer, typename = TEmptyEnableIf<!IsStringView<TContainer>>>
+    explicit TSubprocess(const std::filesystem::path& executable, TContainer&& args, TEnvContainer&& envs)
+            : Executable(executable)
+            , Arguments{executable.string()}
+            , EnvVars{}
+            , PreparedArgs{}
+            , PreparedEnv{}
+            , InStream{}
+            , OutStream{}
+            , ErrStream{}
+            , InFds{NInternal::Pipe()}
+            , OutFds{NInternal::Pipe()}
+            , ErrFds{NInternal::Pipe()}
+            , ChildPid{-1}
+    {
+        CheckExecutable();
+        for (auto&& arg : args) {
+            Arguments.emplace_back(std::forward<decltype(arg)>(arg));
+        }
+        for (auto&& arg : Arguments) {
+            PreparedArgs.push_back(arg.data());
+        }
+
+        for (auto&& env : envs) {
+            EnvVars.emplace_back(std::forward<decltype(env)>(env));
+        }
+        PreparedArgs.push_back(nullptr);
+    }
+
+    template <typename TIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
+    TSubprocess(const std::filesystem::path& executable, TIter argBeg, TIter argEnd)
+        : Executable(executable)
+        , Arguments{executable.string()}
+        , EnvVars{}
+        , PreparedArgs{}
+        , PreparedEnv{}
+        , InStream{}
+        , OutStream{}
+        , ErrStream{}
+        , InFds{NInternal::Pipe()}
+        , OutFds{NInternal::Pipe()}
+        , ErrFds{NInternal::Pipe()}
+        , ChildPid{-1}
+    {
+        CheckExecutable();
+        while (argBeg != argEnd) {
+            Arguments.emplace_back(*argBeg++);
+        }
+        for (auto&& arg : Arguments) {
+            PreparedArgs.push_back(arg.data());
+        }
+        PreparedArgs.push_back(nullptr);
+    }
+
+    template <typename TIter, typename TEnvIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
+    TSubprocess(const std::filesystem::path& executable, TIter argBeg, TIter argEnd, TEnvIter envBeg, TEnvIter envEnd)
+            : Executable(executable)
+            , Arguments{executable.string()}
+            , EnvVars{}
+            , PreparedArgs{}
+            , PreparedEnv{}
+            , InStream{}
+            , OutStream{}
+            , ErrStream{}
+            , InFds{NInternal::Pipe()}
+            , OutFds{NInternal::Pipe()}
+            , ErrFds{NInternal::Pipe()}
+            , ChildPid{-1}
+    {
+        CheckExecutable();
+        while (argBeg != argEnd) {
+            Arguments.emplace_back(*argBeg++);
+        }
+        for (auto&& arg : Arguments) {
+            PreparedArgs.push_back(arg.data());
+        }
+        PreparedArgs.push_back(nullptr);
+
+        while (envBeg != envEnd) {
+            EnvVars.emplace_back(*envBeg++);
+        }
+        for (auto&& env : EnvVars) {
+            PreparedEnv.push_back(env.data());
+        }
+        PreparedEnv.push_back(nullptr);
     }
 
     TSubprocess(TSubprocess&& other) noexcept;

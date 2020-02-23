@@ -125,8 +125,16 @@ void TSubprocess::ForkExec() {
             }
         }
 
-        if (execve(Executable.c_str(), PreparedArgs.data(), PreparedEnv.data()) < 0) {
-            throw std::system_error{std::error_code{errno, std::system_category()}};
+        if (PreparedEnv.empty()) {
+            auto exec = Executable.filename() == Executable ? execvp : execv;
+            if (exec(Executable.c_str(), PreparedArgs.data()) < 0) {
+                throw std::system_error{std::error_code{errno, std::system_category()}};
+            }
+        } else {
+            auto exec = Executable.filename() == Executable ? execvpe : execve;
+            if (exec(Executable.c_str(), PreparedArgs.data(), PreparedEnv.data()) < 0) {
+                throw std::system_error{std::error_code{errno, std::system_category()}};
+            }
         }
     }
     InFds.first.Reset();

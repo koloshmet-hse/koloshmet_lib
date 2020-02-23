@@ -9,7 +9,7 @@ class TBasicUniqueFd : public IFd {
 public:
     explicit TBasicUniqueFd(int fd) noexcept;
 
-    /*implicit*/ TBasicUniqueFd(TNullFd fd = NullFd) noexcept;
+    /* implicit */ TBasicUniqueFd(TNullFd fd = NullFd) noexcept;
 
     TBasicUniqueFd(TBasicUniqueFd&& fd) noexcept;
 

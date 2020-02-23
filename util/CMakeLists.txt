@@ -20,12 +20,12 @@ set(
 )
 
 add_library(k_util ${SRC})
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
+if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         target_link_libraries(k_util c++fs)
+    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        target_link_libraries(k_util stdc++fs)
     endif()
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_link_libraries(k_util stdc++fs)
 endif()
 
 target_include_directories(k_util PUBLIC ${PROJECT_SOURCE_DIR})
