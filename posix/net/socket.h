@@ -18,6 +18,16 @@ public:
         , Type{type}
     {}
 
+    virtual ~TSocketAddress() = default;
+
+    TSocketAddress(const TSocketAddress& address) = default;
+
+    TSocketAddress(TSocketAddress&& address) noexcept;
+
+    TSocketAddress& operator=(const TSocketAddress& address) = default;
+
+    TSocketAddress& operator=(TSocketAddress&& address) noexcept;
+
     template <typename TSockAddr>
     TSockAddr& Address() {
         return std::any_cast<TSockAddr&>(SocketAddress);
@@ -66,6 +76,8 @@ public:
 
     TConnectedSocket(TConnectedSocket&& other) noexcept;
 
+    ~TConnectedSocket() override;
+
     TConnectedSocket& operator=(TConnectedSocket&& other) noexcept;
 
     [[nodiscard]]
@@ -78,36 +90,3 @@ private:
 TConnectedSocket Connect(TSocket&& socket);
 
 TConnectedSocket& Reconnect(TConnectedSocket& socket);
-
-namespace NInternal {
-    struct TConnectedSocketHashWrapper {
-        explicit TConnectedSocketHashWrapper(int id) noexcept
-            : Id{id}
-        {}
-
-        explicit TConnectedSocketHashWrapper(const TConnectedSocket& socket) noexcept
-            : Id{socket.GetId()}
-        {}
-
-        [[nodiscard]]
-        bool operator==(const TConnectedSocketHashWrapper& other) const noexcept {
-            return Id == other.Id;
-        }
-
-        [[nodiscard]]
-        bool operator!=(const TConnectedSocketHashWrapper& other) const noexcept {
-            return Id != other.Id;
-        }
-
-        int Id;
-    };
-}
-
-template <>
-struct std::hash<NInternal::TConnectedSocketHashWrapper> {
-    std::size_t operator()(const NInternal::TConnectedSocketHashWrapper& socket) const {
-        return IntHash(socket.Id);
-    }
-
-    std::hash<int> IntHash;
-};

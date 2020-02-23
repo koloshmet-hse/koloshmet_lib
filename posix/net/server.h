@@ -14,6 +14,8 @@ namespace NInternal {
     void InitIPSocket(TSocket& socket, int port, int connects);
 
     void InitUNIXSocket(TSocket& socket, const std::filesystem::path& socketPath, int connects);
+
+    void ReleaseUnixAddress(TSocket& socket);
 }
 
 template <typename TReplier>
@@ -35,7 +37,11 @@ public:
         NInternal::InitUNIXSocket(Socket, socketPath, connects);
     }
 
-    virtual ~TServer() = default;
+    virtual ~TServer() {
+        if (Socket.GetType() == ESocket::UNIX) {
+            NInternal::ReleaseUnixAddress(Socket);
+        }
+    }
 
 public:
     virtual void operator()() {

@@ -11,8 +11,6 @@
 #include <optional>
 
 namespace NInternal {
-    std::pair<TUniqueFd, TUniqueFd> Pipe();
-
     template <typename TType>
     struct TIsStringView {
     private:

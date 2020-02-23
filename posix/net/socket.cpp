@@ -12,6 +12,17 @@ ESocket TSocketAddress::GetType() const noexcept {
     return Type;
 }
 
+TSocketAddress::TSocketAddress(TSocketAddress&& address) noexcept
+    : SocketAddress{std::move(address.SocketAddress)}
+    , Type{address.Type}
+{}
+
+TSocketAddress& TSocketAddress::operator=(TSocketAddress&& address) noexcept {
+    SocketAddress = std::move(address.SocketAddress);
+    Type = address.Type;
+    return *this;
+}
+
 namespace {
     TUniqueFd AcquireTCPSocket(ESocket socketType) {
         int type;
@@ -31,8 +42,6 @@ namespace {
         }
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
-
-
 }
 
 TSocket::TSocket(ESocket socketType)
@@ -66,13 +75,23 @@ TConnectedSocket::TConnectedSocket(TUniqueFd&& fd, TSocketAddress&& sockAddr)
 TConnectedSocket::TConnectedSocket(TConnectedSocket&& other) noexcept
     : TFdStream{std::move(dynamic_cast<TFdStream&>(other))}
     , TSocketAddress{std::move(dynamic_cast<TSocketAddress&>(other))}
-    , Id{other.Id}
-{}
+    , Id{0}
+{
+    std::swap(Id, other.Id);
+}
+
+TConnectedSocket::~TConnectedSocket() {
+    if (Id != 0) {
+        shutdown(Id, SHUT_RDWR);
+    }
+}
 
 TConnectedSocket& TConnectedSocket::operator=(TConnectedSocket&& other) noexcept {
     dynamic_cast<TFdStream&>(*this) = std::move(dynamic_cast<TFdStream&>(other));
     dynamic_cast<TSocketAddress&>(*this) = std::move(dynamic_cast<TSocketAddress&>(other));
-    Id = other.Id;
+    auto tmpId = other.Id;
+    other.Id = 0;
+    Id = tmpId;
     return *this;
 }
 
@@ -80,24 +99,35 @@ int TConnectedSocket::GetId() const noexcept {
     return Id;
 }
 
+namespace {
+    void ReconnectImpl(TConnectedSocket& socket, bool shut = true) {
+        sockaddr* addrPtr;
+        std::size_t addrLen;
+        switch (socket.GetType()) {
+            case ESocket::IP:
+                addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_in>());
+                addrLen = sizeof(socket.Address<sockaddr_in>());
+                break;
+            case ESocket::UNIX:
+                addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_un>());
+                addrLen = sizeof(socket.Address<sockaddr_un>());
+                break;
+            default:
+                throw TException{"Wrong socket type"};
+        }
+        if (shut) {
+            if (shutdown(socket.GetFd().Get(), SHUT_RDWR) < 0) {
+                throw std::system_error{std::error_code{errno, std::system_category()}};
+            }
+        }
+        if (connect(socket.GetFd().Get(), addrPtr, addrLen) < 0) {
+            throw std::system_error{std::error_code{errno, std::system_category()}};
+        }
+    }
+}
+
 TConnectedSocket& Reconnect(TConnectedSocket& socket) {
-    sockaddr* addrPtr;
-    std::size_t addrLen;
-    switch (socket.GetType()) {
-        case ESocket::IP:
-            addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_in>());
-            addrLen = sizeof(socket.Address<sockaddr_in>());
-            break;
-        case ESocket::UNIX:
-            addrPtr = reinterpret_cast<sockaddr*>(socket.AddressPtr<sockaddr_un>());
-            addrLen = sizeof(socket.Address<sockaddr_un>());
-            break;
-        default:
-            throw TException{"Wrong socket type"};
-    }
-    if (connect(socket.GetFd().Get(), addrPtr, addrLen) < 0) {
-        throw std::system_error{std::error_code{errno, std::system_category()}};
-    }
+    ReconnectImpl(socket);
     return socket;
 }
 
@@ -106,6 +136,6 @@ TConnectedSocket Connect(TSocket&& socket) {
         std::move(dynamic_cast<TUniqueFd&>(socket)),
         std::move(dynamic_cast<TSocketAddress&>(socket))
     };
-    Reconnect(connected);
+    ReconnectImpl(connected, false);
     return connected;
 }

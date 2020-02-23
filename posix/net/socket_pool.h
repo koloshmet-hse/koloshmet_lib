@@ -4,7 +4,7 @@
 
 #include <unordered_map>
 #include <chrono>
-#include <mutex>
+#include <shared_mutex>
 
 enum class EPollEvent : unsigned char {
     IN,
@@ -38,8 +38,6 @@ public:
     using TPollEvent = std::pair<TConnectedSocket&, TEvent>;
 
 public:
-    TSocketPool();
-
     explicit TSocketPool(std::size_t capacity);
 
     std::vector<TPollEvent> Get(std::chrono::milliseconds timeout);
@@ -51,7 +49,8 @@ public:
     void Remove(const TConnectedSocket& socket);
 
 private:
-    mutable std::mutex Mutex;
-    std::unordered_map<NInternal::TConnectedSocketHashWrapper, std::pair<TConnectedSocket, EPollEvent>> Sockets;
+    mutable std::shared_mutex Mutex;
+    std::unordered_map<int, std::pair<TConnectedSocket, EPollEvent>> Sockets;
+    std::pair<TIFdStream, TOFdStream> Pipe;
     mutable std::any PollFds;
 };

@@ -31,6 +31,7 @@ public:
         , Name{name}
         , Description{description}
     {
+        Options["help"].emplace<bool>(false);
         (Options[options.Key].template emplace<TOpts>(options.Default), ...);
         ParamsInit<TParams...>(std::index_sequence_for<TParams...>{});
     }
@@ -46,12 +47,17 @@ public:
         , Name{name}
         , Description{description}
     {
+        Options["help"].emplace<bool>(false);
         (Options[options.Key].template emplace<TOpts>(options.Default), ...);
         ParamsInit<TParams...>(std::index_sequence_for<TParams...>{});
     }
 
     void Init(int argc, char* argv[]) try {
         auto defaultParams = InsertArgs(argc, argv);
+        if (std::get<bool>(Options["help"])) {
+            std::cerr << Help << std::flush;
+            std::exit(0);
+        }
         if (!Default && !defaultParams.empty()) {
             throw TException{"More than ", Parameters.size(), " params"};
         }
@@ -167,7 +173,13 @@ private:
         stream << opt.Key;
         PrintType<TOption>(stream);
         if (!opt.Required) {
-            stream << " = " << opt.Default;
+            if constexpr (std::is_same_v<TOption, std::string_view>) {
+                if (!opt.Default.empty()) {
+                    stream << " = " << std::quoted(opt.Default);
+                }
+            } else {
+                stream << " = " << opt.Default;
+            }
         }
         stream << '\t';
         stream << "\n\t\t" << opt.Description << '\n';

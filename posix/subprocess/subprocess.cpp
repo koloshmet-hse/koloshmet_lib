@@ -4,16 +4,7 @@
 #include <sys/wait.h>
 #include <csignal>
 
-#include <array>
 #include <util/exception/exception.h>
-
-std::pair<TUniqueFd, TUniqueFd> NInternal::Pipe() {
-    std::array<int, 2> fds{};
-    if (pipe(fds.data()) < 0) {
-        throw std::system_error{std::error_code{errno, std::system_category()}};
-    }
-    return {TUniqueFd{fds[0]}, TUniqueFd{fds[1]}};
-}
 
 TSubprocess::TSubprocess(TSubprocess&& other) noexcept
     : Executable(std::move(other.Executable))
@@ -144,10 +135,10 @@ void TSubprocess::ForkExec() {
 }
 
 void TSubprocess::CheckExecutable() const {
-    if (!std::filesystem::exists(Executable)) {
+    if (!exists(Executable)) {
         throw TException{Executable, " doesn't exists"};
     }
-    if (!std::filesystem::is_regular_file(Executable)) {
+    if (!is_regular_file(Executable)) {
         throw TException{Executable, " isn't file"};
     }
 
