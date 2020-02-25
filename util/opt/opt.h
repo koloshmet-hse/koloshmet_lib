@@ -65,7 +65,7 @@ struct TOpt {
 
 template <typename... TParams>
 struct TParamList {
-    static_assert(AllOf<NInternal::TIsParameterType, TParams...>);
+    static_assert(AllOf<NInternal::TIsParameterType, TParams...>());
 
     using TTypes = TTypeList<TParams...>;
 

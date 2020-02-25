@@ -60,7 +60,7 @@ std::vector<std::string_view> TCommand::InsertArgs(std::size_t argc, char* argv[
         if (curKV == Options.end()) {
             throw TException{"Unknown option ", std::quoted(key)};
         }
-        if (value.empty() && curKV->second.index() != TElementTypes::IndexOf<bool>() && i < argc - 1) {
+        if (value.empty() && curKV->second.index() != TElementTypes::Find<bool>() && i < argc - 1) {
             value = argv[++i];
         }
 
