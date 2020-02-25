@@ -1,9 +1,11 @@
 #pragma once
 
 #include <posix/file_descriptor/fd_stream.h>
+#include <posix/environ/environment_variable.h>
 
 #include <filesystem>
 
+#include <util/type/list_utils.h>
 #include <util/exception/exception.h>
 
 #include <string>
@@ -11,10 +13,11 @@
 #include <optional>
 
 class TSubprocess {
-public:
+private:
     template <typename TType>
     static constexpr bool IsStringView = std::is_convertible_v<TType, std::string_view>;
 
+public:
     template <typename... TArgs>
     explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
             : Executable(executable)
@@ -31,66 +34,14 @@ public:
             , ChildPid{-1}
     {
         CheckExecutable();
-        (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
-        for (auto&& arg : Arguments) {
-            PreparedArgs.push_back(arg.data());
+        if constexpr (FindType<TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
+            (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
+        } else {
+            SeparateArgsFromEnvs(std::forward<TArgs>(args)...);
+            PrepareEnvs();
         }
-        PreparedArgs.push_back(nullptr);
-    }
-
-
-    template <typename TContainer, typename = TEmptyEnableIf<!IsStringView<TContainer>>>
-    explicit TSubprocess(const std::filesystem::path& executable, TContainer&& args)
-        : Executable(executable)
-        , Arguments{executable.string()}
-        , EnvVars{}
-        , PreparedArgs{}
-        , PreparedEnv{}
-        , InStream{}
-        , OutStream{}
-        , ErrStream{}
-        , InFds{NInternal::Pipe()}
-        , OutFds{NInternal::Pipe()}
-        , ErrFds{NInternal::Pipe()}
-        , ChildPid{-1}
-    {
-        CheckExecutable();
-        for (auto&& arg : args) {
-            Arguments.emplace_back(std::move(arg));
-        }
-        for (auto&& arg : Arguments) {
-            PreparedArgs.push_back(arg.data());
-        }
-        PreparedArgs.push_back(nullptr);
-    }
-
-    template <typename TContainer, typename TEnvContainer, typename = TEmptyEnableIf<!IsStringView<TContainer>>>
-    explicit TSubprocess(const std::filesystem::path& executable, TContainer&& args, TEnvContainer&& envs)
-            : Executable(executable)
-            , Arguments{executable.string()}
-            , EnvVars{}
-            , PreparedArgs{}
-            , PreparedEnv{}
-            , InStream{}
-            , OutStream{}
-            , ErrStream{}
-            , InFds{NInternal::Pipe()}
-            , OutFds{NInternal::Pipe()}
-            , ErrFds{NInternal::Pipe()}
-            , ChildPid{-1}
-    {
-        CheckExecutable();
-        for (auto&& arg : args) {
-            Arguments.emplace_back(std::forward<decltype(arg)>(arg));
-        }
-        for (auto&& arg : Arguments) {
-            PreparedArgs.push_back(arg.data());
-        }
-
-        for (auto&& env : envs) {
-            EnvVars.emplace_back(std::forward<decltype(env)>(env));
-        }
-        PreparedArgs.push_back(nullptr);
+        PrepareArgs();
+        Execute();
     }
 
     template <typename TIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
@@ -112,10 +63,8 @@ public:
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
         }
-        for (auto&& arg : Arguments) {
-            PreparedArgs.push_back(arg.data());
-        }
-        PreparedArgs.push_back(nullptr);
+        PrepareArgs();
+        Execute();
     }
 
     template <typename TIter, typename TEnvIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
@@ -137,18 +86,13 @@ public:
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
         }
-        for (auto&& arg : Arguments) {
-            PreparedArgs.push_back(arg.data());
-        }
-        PreparedArgs.push_back(nullptr);
+        PrepareArgs();
 
         while (envBeg != envEnd) {
             EnvVars.emplace_back(*envBeg++);
         }
-        for (auto&& env : EnvVars) {
-            PreparedEnv.push_back(env.data());
-        }
-        PreparedEnv.push_back(nullptr);
+        PrepareEnvs();
+        Execute();
     }
 
     TSubprocess(TSubprocess&& other) noexcept;
@@ -156,8 +100,6 @@ public:
     TSubprocess& operator=(TSubprocess&& other) noexcept;
 
     ~TSubprocess();
-
-    void Execute();
 
     void Wait();
 
@@ -169,14 +111,31 @@ public:
 
     TIFdStream& Err();
 
-    void AddEnv(std::string var, std::string_view value);
-
-    void ClearEnv();
-
 private:
+    template <typename T>
+    using IsEnvVar = std::is_same<std::decay_t<T>, TEnvVar>;
+    
+    template <typename TCur, typename... TOthers>
+    void SeparateArgsFromEnvs(TCur&& cur, TOthers&&... others) {
+        if constexpr (std::is_same_v<std::decay_t<TCur>, TEnvVar>) {
+            static_assert(AllOf<IsEnvVar, TCur, TOthers...>(), "Pass env vars after args to subprocess");
+            EnvVars.emplace_back(std::forward<TCur>(cur));
+            EnvVars.emplace_back(std::forward<TOthers>(others)...);
+        } else {
+            Arguments.emplace_back(std::forward<TCur>(cur));
+            SeparateArgsFromEnvs(std::forward<TCur>(cur), std::forward<TOthers>(others)...);
+        }
+    }
+
+    void Execute();
+
     void ForkExec();
 
     void CheckExecutable() const;
+
+    void PrepareArgs();
+
+    void PrepareEnvs();
 
 private:
     std::filesystem::path Executable;
