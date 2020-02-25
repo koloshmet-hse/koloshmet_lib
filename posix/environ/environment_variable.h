@@ -3,6 +3,7 @@
 #include <string>
 
 class TEnvVar {
+public:
     explicit TEnvVar(std::string key);
 
     explicit TEnvVar(std::string key, std::string_view value);
