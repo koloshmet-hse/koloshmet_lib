@@ -18,6 +18,13 @@ private:
     static constexpr bool IsStringView = std::is_convertible_v<TType, std::string_view>;
 
 public:
+    enum class EExitCode : long long {
+        Ok = 0,
+        Signaled = std::numeric_limits<long long>::max(),
+        Unknown = std::numeric_limits<long long>::min()
+    };
+
+public:
     template <typename... TArgs>
     explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
             : Executable(executable)
@@ -33,7 +40,6 @@ public:
             , ErrFds{NInternal::Pipe()}
             , ChildPid{-1}
     {
-        CheckExecutable();
         if constexpr (FindType<TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
             (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
         } else {
@@ -59,7 +65,6 @@ public:
         , ErrFds{NInternal::Pipe()}
         , ChildPid{-1}
     {
-        CheckExecutable();
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
         }
@@ -82,7 +87,6 @@ public:
             , ErrFds{NInternal::Pipe()}
             , ChildPid{-1}
     {
-        CheckExecutable();
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
         }
@@ -101,7 +105,7 @@ public:
 
     ~TSubprocess();
 
-    void Wait();
+    EExitCode Wait();
 
     void Kill();
 
@@ -114,7 +118,7 @@ public:
 private:
     template <typename T>
     using IsEnvVar = std::is_same<std::decay_t<T>, TEnvVar>;
-    
+
     template <typename TCur, typename... TOthers>
     void SeparateArgsFromEnvs(TCur&& cur, TOthers&&... others) {
         if constexpr (std::is_same_v<std::decay_t<TCur>, TEnvVar>) {
@@ -130,8 +134,6 @@ private:
     void Execute();
 
     void ForkExec();
-
-    void CheckExecutable() const;
 
     void PrepareArgs();
 

@@ -16,9 +16,9 @@ TSubprocess::TSubprocess(TSubprocess&& other) noexcept
     , InFds(std::move(other.InFds))
     , OutFds(std::move(other.OutFds))
     , ErrFds(std::move(other.ErrFds))
-    , ChildPid(other.ChildPid)
+    , ChildPid(-1)
 {
-    other.ChildPid = -1;
+    std::swap(ChildPid, other.ChildPid);
 }
 
 TSubprocess& TSubprocess::operator=(TSubprocess&& other) noexcept {
@@ -32,13 +32,19 @@ TSubprocess& TSubprocess::operator=(TSubprocess&& other) noexcept {
     InFds = std::move(other.InFds);
     OutFds = std::move(other.OutFds);
     ErrFds = std::move(other.ErrFds);
-    ChildPid = other.ChildPid;
+    auto tmp = other.ChildPid;
     other.ChildPid = -1;
+    ChildPid = tmp;
     return *this;
 }
 
 TSubprocess::~TSubprocess() {
-    Kill();
+    try {
+        Kill();
+        Wait();
+    } catch (...) {
+        // destructor must be noexcept
+    }
 }
 
 void TSubprocess::Execute() {
@@ -54,19 +60,33 @@ void TSubprocess::Execute() {
     }
 }
 
-void TSubprocess::Wait() {
-    int status;
+TSubprocess::EExitCode TSubprocess::Wait() {
     InStream->Close();
-    if (ChildPid > 0 && waitpid(ChildPid, std::addressof(status), 0) < 0) {
-        throw std::system_error{std::error_code{errno, std::system_category()}};
+    if (ChildPid > 0) {
+        int status;
+        if (waitpid(ChildPid, std::addressof(status), 0) < 0) {
+            throw std::system_error{std::error_code{errno, std::system_category()}};
+        }
+        if (WIFEXITED(status)) {
+            return EExitCode{WEXITSTATUS(status)};
+        } else if (WIFSIGNALED(status)) {
+            return EExitCode::Signaled;
+        } else {
+            return EExitCode::Unknown;
+        }
+    } else {
+        throw TException{"The process has not been run"};
     }
-    ChildPid = -1;
+    return EExitCode::Unknown;
 }
 
 void TSubprocess::Kill() {
     if (ChildPid > 0) {
-        kill(ChildPid, SIGKILL);
+        if (kill(ChildPid, SIGKILL) < 0) {
+            throw std::system_error{std::error_code{errno, std::system_category()}};
+        }
     }
+    ChildPid = -1;
 }
 
 TOFdStream& TSubprocess::In() {
@@ -128,19 +148,6 @@ void TSubprocess::ForkExec() {
     InFds.first.Reset();
     OutFds.second.Reset();
     ErrFds.second.Reset();
-}
-
-void TSubprocess::CheckExecutable() const {
-    if (!exists(Executable)) {
-        throw TException{Executable, " doesn't exists"};
-    }
-    if (!is_regular_file(Executable)) {
-        throw TException{Executable, " isn't file"};
-    }
-
-    if (access(Executable.c_str(), X_OK) < 0) {
-        throw std::system_error{std::error_code{errno, std::system_category()}};
-    }
 }
 
 void TSubprocess::PrepareArgs() {
