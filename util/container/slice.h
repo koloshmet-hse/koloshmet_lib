@@ -2,15 +2,13 @@
 
 #include <util/memory/move_on_rvalue_ptr.h>
 
-#include <vector>
-
 template <typename TContainer>
 struct TSlicer {
     template <typename TIter>
     TContainer operator()(
         TIter begin,
         TIter end,
-        const TContainer& /*delimiter*/) const
+        const TContainer& /* delimiter */) const
     {
         return TContainer(begin, end);
     }
@@ -27,135 +25,98 @@ template <
     typename TContainer,
     typename TIsDelim,
     typename TSlicer = TSlicer<TContainer>>
-class TSlice {
+class TSlice : private TSlicer {
+    using TContainerIterator = decltype(std::cbegin(std::declval<TContainer>()));
+
 public:
     class TIterator {
     public:
         using difference_type = ssize_t;
         using value_type = TContainer;
-        using pointer = const TContainer*;
-        using reference = const TContainer&;
+        using pointer = TContainer*;
+        using reference = TContainer&;
         using iterator_category = std::input_iterator_tag;
 
     public:
-        TIterator()
-            : Elems{nullptr}
-            , Iter{0}
-        {}
-
-        TIterator(long long pos, TSlice* elems)
-            : Elems{elems}
-            , Iter{pos}
+        explicit TIterator(const TSlice& cont, bool end)
+            : CurIt{end ? std::end(*cont.Seq) : std::begin(*cont.Seq)}
+            , Slice{end ? nullptr : std::addressof(cont)}
+            , Cur{}
         {
-            while (static_cast<long long>(Elems->Elements.size()) <= Iter) {
-                if (!Elems->Next()) {
-                    Iter = -1;
-                    break;
-                }
+            if (end) {
+                return;
             }
+            Cur = Slice->Next(CurIt);
         }
 
         TIterator& operator++() {
-            while (Elems->Elements.size() <= static_cast<std::size_t>(Iter + 1)) {
-                if (!Elems->Next()) {
-                    Iter = -1;
-                    return *this;
+            if (Slice != nullptr) {
+                Cur = Slice->Next(CurIt);
+                if (std::end(*Slice->Seq) == CurIt && std::empty(Cur)) {
+                    Slice = nullptr;
                 }
             }
-            ++Iter;
             return *this;
         }
 
         const TIterator operator++(int) {
             auto res = *this;
-            while (Elems->Elements.size() <= static_cast<std::size_t>(Iter + 1)) {
-                if (!Elems->Next()) {
-                    Iter = -1;
-                    return res;
+            if (Slice != nullptr) {
+                Cur = Slice->Next(CurIt);
+                if (std::end(*Slice->Seq) == CurIt && std::empty(Cur)) {
+                    Slice = nullptr;
                 }
             }
-            ++Iter;
             return res;
         }
 
         reference operator*() const {
-            return Elems->Elements[Iter];
+            return Cur;
         }
 
         pointer operator->() const {
-            return std::addressof(Elems->Elements[Iter]);
+            return std::addressof(Cur);
         }
 
         bool operator==(const TIterator& it) const {
-            return Elems == it.Elems && Iter == it.Iter;
+            return CurIt == it.CurIt && Slice == it.Slice;
         }
 
         bool operator!=(const TIterator& it) const {
-            return Elems != it.Elems || Iter != it.Iter;
+            return Slice != it.Slice || CurIt != it.CurIt;
         }
 
     private:
-        TSlice* Elems;
-        long long Iter;
+        TContainerIterator CurIt;
+        const TSlice* Slice;
+        mutable TContainer Cur;
     };
 
 public:
     TSlice(
         const TContainer& seq,
         const TIsDelim& isDelim,
-        const TSlicer& slicer = TSlicer{})
-        : Elements{}
+        TSlicer slicer = TSlicer{})
+        : TSlicer{std::move(slicer)}
         , Seq{seq}
-        , CurIt{std::begin(seq)}
-        , Slicer(slicer)
         , IsDelim(isDelim)
     {}
 
     TSlice(
         TContainer&& seq,
         const TIsDelim& isDelim,
-        const TSlicer& slicer = TSlicer{})
-        : Elements{}
+        TSlicer slicer = TSlicer{})
+        : TSlicer{std::move(slicer)}
         , Seq{std::move(seq)}
-        , CurIt{std::begin(*Seq)}
-        , Slicer(slicer)
         , IsDelim(isDelim)
     {}
 
-    bool Next() {
-        if (CurIt == std::end(*Seq)) {
-            return false;
-        }
-
-        auto buffBeg = CurIt;
-        auto buffEnd = CurIt;
-        auto delimBeg = CurIt;
-        while (CurIt != std::end(*Seq)) {
-            ++CurIt;
-            if (IsDelim(delimBeg, CurIt) < 0) {
-                buffEnd = CurIt;
-                delimBeg = CurIt;
-            } else if (IsDelim(delimBeg, CurIt) == 0) {
-                Elements.emplace_back(Slicer(buffBeg, buffEnd, *Seq));
-                if (CurIt == std::end(*Seq)) {
-                    Elements.emplace_back();
-                }
-                return true;
-            }
-        }
-        if (IsDelim(delimBeg, CurIt) != 0) {
-            buffEnd = CurIt;
-            Elements.emplace_back(Slicer(buffBeg, buffEnd, *Seq));
-        }
-        return true;
-    }
-
     TIterator begin() {
-        return TIterator{0, this};
+        return TIterator{*this, false};
     }
 
     TIterator end() {
-        return TIterator{-1, this};
+        return TIterator{*this, true};
     }
 
     template <typename TCont>
@@ -165,21 +126,31 @@ public:
 
     template <typename TCont>
     /* implicit */ operator TCont() && {
-        if constexpr (std::is_same_v<TCont, std::vector<TContainer>>) {
-            std::distance(begin(), end());
-            return std::move(Elements);
-        } else {
-            return TCont(std::move_iterator{begin()}, std::move_iterator{end()});
-        }
+        return TCont(std::move_iterator{begin()}, std::move_iterator{end()});
     }
 
 private:
-    using TContainerIt = decltype(std::begin(std::declval<TContainer>()));
+    TContainer Next(TContainerIterator& it) const {
+        if (it == std::end(*Seq)) {
+            return {};
+        }
+
+        auto buffBeg = it;
+        auto buffEnd = it;
+        auto delimBeg = it;
+        while (it != std::end(*Seq)) {
+            ++it;
+            if (IsDelim(delimBeg, it) < 0) {
+                ++buffEnd;
+                ++delimBeg;
+            } else if (IsDelim(delimBeg, it) == 0) {
+                return (*this)(buffBeg, buffEnd, *Seq);
+            }
+        }
+        return (*this)(buffBeg, it, *Seq);
+    }
 
 private:
-    std::vector<TContainer> Elements;
     TMoveOnRvaluePtr<TContainer> Seq;
-    TContainerIt CurIt;
-    TSlicer Slicer;
     TIsDelim IsDelim;
 };

@@ -6,9 +6,9 @@
 #include <string>
 #include <string_view>
 
-std::string ToLower(std::string_view);
+std::string ToLower(std::string_view str);
 
-std::string ToUpper(std::string_view);
+std::string ToUpper(std::string_view str);
 
 template <typename T>
 std::string ToString(const T& t) {
@@ -55,7 +55,7 @@ struct TSlicer<std::string_view> {
 namespace NInternal {
     struct TIsDelim {
         template <typename TIter>
-        int operator()(TIter beg, TIter end) {
+        int operator()(TIter beg, TIter end) const {
             for (auto&& cur : Delim) {
                 if (beg == end) {
                     return 1;
