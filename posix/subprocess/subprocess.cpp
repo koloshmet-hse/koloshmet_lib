@@ -169,6 +169,12 @@ std::filesystem::path TSubprocess::FindExecutablePath(std::filesystem::path exec
         if (!exists(executable)) {
             throw TException{executable, " file doesn't exist"};
         }
+        if (is_symlink(executable)) {
+            executable = read_symlink(executable);
+            if (!exists(executable)) {
+                throw TException{executable, " file doesn't exist"};
+            }
+        }
         if (!is_regular_file(executable)) {
             throw TException{executable, " file isn't regular"};
         }
@@ -178,15 +184,19 @@ std::filesystem::path TSubprocess::FindExecutablePath(std::filesystem::path exec
         return executable;
     }
     std::string_view path = std::getenv("PATH");
-    for (auto cur : Split(path, ":")) {
-        std::filesystem::path curPath{cur};
+    for (std::filesystem::path curPath : Split(path, ":")) {
+        if (exists(curPath) && is_symlink(curPath)) {
+            curPath = read_symlink(curPath);
+        }
         if (exists(curPath) && is_directory(curPath)) {
-            for (auto&& file : std::filesystem::directory_iterator{curPath}) {
-                if (file.path().has_filename() && file.path().filename() == executable.filename() &&
-                    exists(file.path()) && is_regular_file(file.path()) &&
-                    access(file.path().c_str(), X_OK) == 0)
-                {
-                    return file.path();
+            for (std::filesystem::path file : std::filesystem::directory_iterator{curPath}) {
+                if (file.has_filename() && file.filename() == executable.filename()) {
+                    if (exists(file) && is_symlink(file)) {
+                        file = read_symlink(file);
+                    }
+                    if (exists(file) && is_regular_file(file) && access(file.c_str(), X_OK) == 0) {
+                        return file;
+                    }
                 }
             }
         }

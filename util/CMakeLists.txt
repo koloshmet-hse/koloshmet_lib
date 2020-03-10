@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-
 set(
     SRC
     type/utils.cpp
@@ -21,9 +19,9 @@ set(
 
 add_library(k_util ${SRC})
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
         target_link_libraries(k_util c++fs)
-    elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES GNU)
         target_link_libraries(k_util stdc++fs)
     endif()
 endif()
