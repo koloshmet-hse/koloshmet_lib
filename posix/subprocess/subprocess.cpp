@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include <csignal>
 
+#include <util/string/utils.h>
+
 #include <util/exception/exception.h>
 
 TSubprocess::TSubprocess(TSubprocess&& other) noexcept
@@ -134,13 +136,11 @@ void TSubprocess::ForkExec() {
         }
 
         if (PreparedEnv.empty()) {
-            auto exec = Executable.filename() == Executable ? execvp : execv;
-            if (exec(Executable.c_str(), PreparedArgs.data()) < 0) {
+            if (execv(Executable.c_str(), PreparedArgs.data()) < 0) {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         } else {
-            auto exec = Executable.filename() == Executable ? execvpe : execve;
-            if (exec(Executable.c_str(), PreparedArgs.data(), PreparedEnv.data()) < 0) {
+            if (execve(Executable.c_str(), PreparedArgs.data(), PreparedEnv.data()) < 0) {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         }
@@ -162,4 +162,34 @@ void TSubprocess::PrepareEnvs() {
         PreparedEnv.push_back(cur.data());
     }
     PreparedEnv.push_back(nullptr);
+}
+
+std::filesystem::path TSubprocess::FindExecutablePath(std::filesystem::path executable) {
+    if (executable != executable.filename()) {
+        if (!exists(executable)) {
+            throw TException{executable, " file doesn't exist"};
+        }
+        if (!is_regular_file(executable)) {
+            throw TException{executable, " file isn't regular"};
+        }
+        if (access(executable.c_str(), X_OK) != 0) {
+            throw TException{executable, " file can't be executed"};
+        }
+        return executable;
+    }
+    std::string_view path = std::getenv("PATH");
+    for (auto cur : Split(path, ":")) {
+        std::filesystem::path curPath{cur};
+        if (exists(curPath) && is_directory(curPath)) {
+            for (auto&& file : std::filesystem::directory_iterator{curPath}) {
+                if (file.path().has_filename() && file.path().filename() == executable.filename() &&
+                    exists(file.path()) && is_regular_file(file.path()) &&
+                    access(file.path().c_str(), X_OK) == 0)
+                {
+                    return file.path();
+                }
+            }
+        }
+    }
+    throw TException{"Can't find ", executable, " in $PATH"};
 }

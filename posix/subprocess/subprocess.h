@@ -26,9 +26,9 @@ public:
 
 public:
     template <typename... TArgs>
-    explicit TSubprocess(const std::filesystem::path& executable, TArgs&&... args)
-            : Executable(executable)
-            , Arguments{executable.string()}
+    explicit TSubprocess(std::filesystem::path executable, TArgs&&... args)
+            : Executable(FindExecutablePath(std::move(executable)))
+            , Arguments{Executable.string()}
             , EnvVars{}
             , PreparedArgs{}
             , PreparedEnv{}
@@ -51,9 +51,9 @@ public:
     }
 
     template <typename TIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
-    TSubprocess(const std::filesystem::path& executable, TIter argBeg, TIter argEnd)
-        : Executable(executable)
-        , Arguments{executable.string()}
+    TSubprocess(std::filesystem::path executable, TIter argBeg, TIter argEnd)
+        : Executable(FindExecutablePath(std::move(executable)))
+        , Arguments{Executable.string()}
         , EnvVars{}
         , PreparedArgs{}
         , PreparedEnv{}
@@ -73,9 +73,9 @@ public:
     }
 
     template <typename TIter, typename TEnvIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
-    TSubprocess(const std::filesystem::path& executable, TIter argBeg, TIter argEnd, TEnvIter envBeg, TEnvIter envEnd)
-            : Executable(executable)
-            , Arguments{executable.string()}
+    TSubprocess(std::filesystem::path executable, TIter argBeg, TIter argEnd, TEnvIter envBeg, TEnvIter envEnd)
+            : Executable(FindExecutablePath(std::move(executable)))
+            , Arguments{Executable.string()}
             , EnvVars{}
             , PreparedArgs{}
             , PreparedEnv{}
@@ -114,6 +114,8 @@ public:
     TIFdStream& Out();
 
     TIFdStream& Err();
+
+    static std::filesystem::path FindExecutablePath(std::filesystem::path executable);
 
 private:
     template <typename T>
