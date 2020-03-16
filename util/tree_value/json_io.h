@@ -7,16 +7,22 @@
 
 class TJsonIO {
 public:
-    explicit TJsonIO(TTreeValue& value);
+    explicit TJsonIO(TTreeValue& value, bool pretty = false);
 
     explicit operator std::string() const;
 
+    TJsonIO(const TJsonIO&) = delete;
+    TJsonIO& operator=(const TJsonIO&) = delete;
+
 private:
+    TJsonIO(TTreeValue& value, std::int_least8_t level);
+
     [[nodiscard]]
     std::string ToString() const;
 
 private:
     TTreeValue& Value;
+    std::int_least8_t Pretty;
 
 private:
     friend std::istream& operator>>(std::istream& stream, TJsonIO& json);

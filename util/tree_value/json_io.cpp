@@ -7,8 +7,14 @@
 #include <charconv>
 #include <vector>
 
-TJsonIO::TJsonIO(TTreeValue& value) 
+TJsonIO::TJsonIO(TTreeValue& value, bool pretty)
     : Value{value}
+    , Pretty(pretty ? 1 : std::numeric_limits<std::int_least8_t>::lowest())
+{}
+
+TJsonIO::TJsonIO(TTreeValue& value, std::int_least8_t level)
+    : Value{value}
+    , Pretty{level}
 {}
 
 std::string TJsonIO::ToString() const {
@@ -34,13 +40,27 @@ std::string TJsonIO::ToString() const {
             std::string res;
             res += '[';
             for (auto&& json : std::get<TTreeValue::TArray>(*Value.Value)) {
-                res += TJsonIO{json}.ToString();
+                if (Pretty >= 0) {
+                    res += '\n';
+                    for (std::int_least8_t i = 0; i / 4 < Pretty; ++i) {
+                        res += ' ';
+                    }
+                }
+                res += TJsonIO{json, static_cast<std::int_least8_t>(Pretty + 1)}.ToString();
                 res += ',';
             }
             if (std::get<TTreeValue::TArray>(*Value.Value).empty()) {
                 res += ']';
             } else {
-                res.back() = ']';
+                if (Pretty >= 0) {
+                    res.back() = '\n';
+                    for (std::int_least8_t i = 0; i / 4 < Pretty - 1; ++i) {
+                        res += ' ';
+                    }
+                    res += ']';
+                } else {
+                    res.back() = ']';
+                }
             }
             return res;
         }
@@ -48,17 +68,34 @@ std::string TJsonIO::ToString() const {
             std::string res;
             res += '{';
             for (auto&& [label, json] : std::get<TTreeValue::TDict>(*Value.Value)) {
+                if (Pretty >= 0) {
+                    res += '\n';
+                    for (std::int_least8_t i = 0; i / 4 < Pretty; ++i) {
+                        res += ' ';
+                    }
+                }
                 res += '"';
                 res += label;
                 res += '"';
                 res += ':';
-                res += TJsonIO{json}.ToString();
+                if (Pretty >= 0) {
+                    res += ' ';
+                }
+                res += TJsonIO{json, static_cast<std::int_least8_t>(Pretty + 1)}.ToString();
                 res += ',';
             }
             if (std::get<TTreeValue::TDict>(*Value.Value).empty()) {
                 res += '}';
             } else {
-                res.back() = '}';
+                if (Pretty >= 0) {
+                    res.back() = '\n';
+                    for (std::int_least8_t i = 0; i / 4 < Pretty - 1; ++i) {
+                        res += ' ';
+                    }
+                    res += '}';
+                } else {
+                    res.back() = '}';
+                }
             }
             return res;
         }
