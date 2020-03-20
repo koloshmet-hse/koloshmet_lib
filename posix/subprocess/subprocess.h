@@ -24,34 +24,22 @@ public:
         Unknown = std::numeric_limits<long long>::min()
     };
 
+    enum class ECommunicationMode : std::uint_least32_t {
+        Direct = 0,
+        In = 1,
+        InPt = 3,
+        Out = 4,
+        OutPt = 12,
+        Err = 16,
+        ErrPt = 48
+    };
+
 public:
     template <typename... TArgs>
-    explicit TSubprocess(std::filesystem::path executable, TArgs&&... args)
-            : Executable(FindExecutablePath(std::move(executable)))
-            , Arguments{Executable.string()}
-            , EnvVars{}
-            , PreparedArgs{}
-            , PreparedEnv{}
-            , InStream{}
-            , OutStream{}
-            , ErrStream{}
-            , InFds{NInternal::Pipe()}
-            , OutFds{NInternal::Pipe()}
-            , ErrFds{NInternal::Pipe()}
-            , ChildPid{-1}
-    {
-        if constexpr (FindType<TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
-            (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
-        } else {
-            SeparateArgsFromEnvs(std::forward<TArgs>(args)...);
-            PrepareEnvs();
-        }
-        PrepareArgs();
-        Execute();
-    }
-
-    template <typename TIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
-    TSubprocess(std::filesystem::path executable, TIter argBeg, TIter argEnd)
+    explicit TSubprocess(
+        std::filesystem::path executable,
+        ECommunicationMode communicationMode,
+        TArgs&&... args)
         : Executable(FindExecutablePath(std::move(executable)))
         , Arguments{Executable.string()}
         , EnvVars{}
@@ -60,32 +48,55 @@ public:
         , InStream{}
         , OutStream{}
         , ErrStream{}
-        , InFds{NInternal::Pipe()}
-        , OutFds{NInternal::Pipe()}
-        , ErrFds{NInternal::Pipe()}
+        , ChildPid{-1}
+    {
+        if constexpr (FindType<TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
+            (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
+        } else {
+            SeparateArgsFromEnvs(std::forward<TArgs>(args)...);
+            PrepareEnvs();
+        }
+        PrepareArgs();
+        ForkExec(communicationMode);
+    }
+
+    template <typename TIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
+    TSubprocess(
+        std::filesystem::path executable,
+        ECommunicationMode communicationMode,
+        TIter argBeg, TIter argEnd)
+        : Executable(FindExecutablePath(std::move(executable)))
+        , Arguments{Executable.string()}
+        , EnvVars{}
+        , PreparedArgs{}
+        , PreparedEnv{}
+        , InStream{}
+        , OutStream{}
+        , ErrStream{}
         , ChildPid{-1}
     {
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
         }
         PrepareArgs();
-        Execute();
+        ForkExec(communicationMode);
     }
 
     template <typename TIter, typename TEnvIter, typename = TEmptyEnableIf<!IsStringView<TIter>>>
-    TSubprocess(std::filesystem::path executable, TIter argBeg, TIter argEnd, TEnvIter envBeg, TEnvIter envEnd)
-            : Executable(FindExecutablePath(std::move(executable)))
-            , Arguments{Executable.string()}
-            , EnvVars{}
-            , PreparedArgs{}
-            , PreparedEnv{}
-            , InStream{}
-            , OutStream{}
-            , ErrStream{}
-            , InFds{NInternal::Pipe()}
-            , OutFds{NInternal::Pipe()}
-            , ErrFds{NInternal::Pipe()}
-            , ChildPid{-1}
+    TSubprocess(
+        std::filesystem::path executable,
+        ECommunicationMode communicationMode,
+        TIter argBeg, TIter argEnd,
+        TEnvIter envBeg, TEnvIter envEnd)
+        : Executable(FindExecutablePath(std::move(executable)))
+        , Arguments{Executable.string()}
+        , EnvVars{}
+        , PreparedArgs{}
+        , PreparedEnv{}
+        , InStream{}
+        , OutStream{}
+        , ErrStream{}
+        , ChildPid{-1}
     {
         while (argBeg != argEnd) {
             Arguments.emplace_back(*argBeg++);
@@ -96,7 +107,7 @@ public:
             EnvVars.emplace_back(*envBeg++);
         }
         PrepareEnvs();
-        Execute();
+        ForkExec(communicationMode);
     }
 
     TSubprocess(TSubprocess&& other) noexcept;
@@ -133,9 +144,7 @@ private:
         }
     }
 
-    void Execute();
-
-    void ForkExec();
+    void ForkExec(ECommunicationMode mode);
 
     void PrepareArgs();
 
@@ -143,15 +152,19 @@ private:
 
 private:
     std::filesystem::path Executable;
+
     std::vector<std::string> Arguments;
     std::vector<std::string> EnvVars;
     std::vector<char*> PreparedArgs;
     std::vector<char*> PreparedEnv;
+
     std::optional<TOFdStream> InStream;
     std::optional<TIFdStream> OutStream;
     std::optional<TIFdStream> ErrStream;
-    std::pair<TUniqueFd, TUniqueFd> InFds;
-    std::pair<TUniqueFd, TUniqueFd> OutFds;
-    std::pair<TUniqueFd, TUniqueFd> ErrFds;
+
     int ChildPid;
 };
+
+bool operator&(TSubprocess::ECommunicationMode l, TSubprocess::ECommunicationMode r);
+
+TSubprocess::ECommunicationMode operator|(TSubprocess::ECommunicationMode l, TSubprocess::ECommunicationMode r);

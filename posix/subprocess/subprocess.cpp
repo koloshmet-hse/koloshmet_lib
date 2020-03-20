@@ -15,9 +15,6 @@ TSubprocess::TSubprocess(TSubprocess&& other) noexcept
     , InStream(std::move(other.InStream))
     , OutStream(std::move(other.OutStream))
     , ErrStream(std::move(other.ErrStream))
-    , InFds(std::move(other.InFds))
-    , OutFds(std::move(other.OutFds))
-    , ErrFds(std::move(other.ErrFds))
     , ChildPid(-1)
 {
     std::swap(ChildPid, other.ChildPid);
@@ -31,9 +28,6 @@ TSubprocess& TSubprocess::operator=(TSubprocess&& other) noexcept {
     InStream = std::move(other.InStream);
     OutStream = std::move(other.OutStream);
     ErrStream = std::move(other.ErrStream);
-    InFds = std::move(other.InFds);
-    OutFds = std::move(other.OutFds);
-    ErrFds = std::move(other.ErrFds);
     auto tmp = other.ChildPid;
     other.ChildPid = -1;
     ChildPid = tmp;
@@ -49,21 +43,7 @@ TSubprocess::~TSubprocess() {
     }
 }
 
-void TSubprocess::Execute() {
-    ForkExec();
-    if (InFds.second) {
-        InStream.emplace(std::move(InFds.second));
-    }
-    if (OutFds.first) {
-        OutStream.emplace(std::move(OutFds.first));
-    }
-    if (ErrFds.first) {
-        ErrStream.emplace(std::move(ErrFds.first));
-    }
-}
-
 TSubprocess::EExitCode TSubprocess::Wait() {
-    InStream->Close();
     if (ChildPid > 0) {
         int status;
         if (waitpid(ChildPid, std::addressof(status), 0) < 0) {
@@ -112,25 +92,39 @@ TIFdStream& TSubprocess::Err() {
     throw TException("No valid error fd");
 }
 
-void TSubprocess::ForkExec() {
+void TSubprocess::ForkExec(ECommunicationMode mode) {
+    std::pair<TUniqueFd, TUniqueFd> inFds;
+    std::pair<TUniqueFd, TUniqueFd> outFds;
+    std::pair<TUniqueFd, TUniqueFd> errFds;
+
+    if (mode & ECommunicationMode::In) {
+        inFds = NInternal::Pipe();
+    }
+    if (mode & ECommunicationMode::Out) {
+        outFds = NInternal::Pipe();
+    }
+    if (mode & ECommunicationMode::Err) {
+        errFds = NInternal::Pipe();
+    }
+
     if ((ChildPid = fork()) < 0) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     } else if (ChildPid == 0) {
         {
-            auto [inRead, inWrite] = std::move(InFds);
-            if (dup2(inRead.Get(), STDIN_FILENO) < 0) {
+            auto [inRead, inWrite] = std::move(inFds);
+            if (mode & ECommunicationMode::In && dup2(inRead.Get(), STDIN_FILENO) < 0) {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         }
         {
-            auto [outRead, outWrite] = std::move(OutFds);
-            if (dup2(outWrite.Get(), STDOUT_FILENO) < 0) {
+            auto [outRead, outWrite] = std::move(outFds);
+            if (mode & ECommunicationMode::Out && dup2(outWrite.Get(), STDOUT_FILENO) < 0) {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         }
         {
-            auto [errRead, errWrite] = std::move(ErrFds);
-            if (dup2(errWrite.Get(), STDERR_FILENO) < 0) {
+            auto [errRead, errWrite] = std::move(errFds);
+            if (mode & ECommunicationMode::Err && dup2(errWrite.Get(), STDERR_FILENO) < 0) {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         }
@@ -144,10 +138,20 @@ void TSubprocess::ForkExec() {
                 throw std::system_error{std::error_code{errno, std::system_category()}};
             }
         }
+    } else {
+        auto [inRead, inWrite] = std::move(inFds);
+        auto [outRead, outWrite] = std::move(outFds);
+        auto [errRead, errWrite] = std::move(errFds);
+        if (inWrite) {
+            InStream.emplace(std::move(inWrite));
+        }
+        if (outRead) {
+            OutStream.emplace(std::move(outRead));
+        }
+        if (errRead) {
+            ErrStream.emplace(std::move(errRead));
+        }
     }
-    InFds.first.Reset();
-    OutFds.second.Reset();
-    ErrFds.second.Reset();
 }
 
 void TSubprocess::PrepareArgs() {
@@ -203,3 +207,13 @@ std::filesystem::path TSubprocess::FindExecutablePath(std::filesystem::path exec
     }
     throw TException{"Can't find ", executable, " in $PATH"};
 }
+
+bool operator&(TSubprocess::ECommunicationMode l, TSubprocess::ECommunicationMode r) {
+    return (static_cast<std::uint_least32_t>(l) & static_cast<std::uint_least32_t>(r)) != 0;
+}
+
+TSubprocess::ECommunicationMode operator|(TSubprocess::ECommunicationMode l, TSubprocess::ECommunicationMode r) {
+    return static_cast<TSubprocess::ECommunicationMode>(
+        static_cast<std::uint_least32_t>(l) | static_cast<std::uint_least32_t>(r));
+}
+
