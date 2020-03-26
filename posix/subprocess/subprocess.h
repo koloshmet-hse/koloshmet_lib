@@ -31,7 +31,8 @@ public:
         Out = 4,
         OutPt = 12,
         Err = 16,
-        ErrPt = 48
+        ErrPt = 48,
+        Pt = 42
     };
 
 public:

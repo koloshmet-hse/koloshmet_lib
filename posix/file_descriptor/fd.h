@@ -2,12 +2,12 @@
 
 struct TNullFd {};
 
-constexpr TNullFd NullFd{};
+constexpr TNullFd NULL_FD{};
 
 class IFd {
 public:
     [[nodiscard]]
-    virtual int Get() const noexcept = 0;
+    virtual int Get() const = 0;
 
     virtual ~IFd() = default;
 };

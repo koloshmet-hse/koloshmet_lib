@@ -7,99 +7,68 @@
 template <typename TCloser>
 class TBasicUniqueFd : public IFd {
 public:
-    explicit TBasicUniqueFd(int fd) noexcept;
+    explicit TBasicUniqueFd(int fd) noexcept
+        : Fd{fd}
+    {}
 
-    /* implicit */ TBasicUniqueFd(TNullFd fd = NullFd) noexcept;
+    /* implicit */ TBasicUniqueFd(TNullFd = NULL_FD) noexcept
+        : Fd{-1}
+    {}
 
-    TBasicUniqueFd(TBasicUniqueFd&& fd) noexcept;
+    TBasicUniqueFd(TBasicUniqueFd&& fd) noexcept
+        : Fd{-1}
+    {
+        std::swap(Fd, fd.Fd);
+    }
 
-    TBasicUniqueFd& operator=(TBasicUniqueFd&& fd) noexcept;
+    TBasicUniqueFd& operator=(TBasicUniqueFd&& fd) noexcept {
+        if (fd.Fd == Fd) {
+            return *this;
+        }
+        Close();
+        Fd = fd.Fd;
+        fd.Fd = -1;
+        return *this;
+    }
 
-    ~TBasicUniqueFd() override;
+    ~TBasicUniqueFd() override {
+        try {
+            Close();
+        } catch (...) {
+            // destructor must be noexcept
+        }
+    }
 
     [[nodiscard]]
-    int Get() const noexcept override;
+    int Get() const override {
+        return Fd;
+    }
 
     [[nodiscard]]
-    int Release() noexcept;
+    int Release() noexcept {
+        auto fd = Fd;
+        Fd = -1;
+        return fd;
+    }
 
-    void Reset(int fd = -1);
+    void Reset(int fd = -1) {
+        Close();
+        Fd = fd;
+    }
 
     explicit operator bool() const {
         return Fd != -1;
     }
 
 private:
-    void Close();
+    void Close() {
+        if (Fd > 0) {
+            TCloser::Close(Fd);
+        }
+    }
 
 private:
     int Fd;
 };
 
-
-template <typename TCloser>
-TBasicUniqueFd<TCloser>::TBasicUniqueFd(int fd) noexcept
-    : Fd{fd}
-{}
-
-template <typename TCloser>
-TBasicUniqueFd<TCloser>::TBasicUniqueFd(TNullFd) noexcept
-    : Fd{-1}
-{}
-
-template <typename TCloser>
-TBasicUniqueFd<TCloser>::TBasicUniqueFd(TBasicUniqueFd&& fd) noexcept
-    : Fd{fd.Fd}
-{
-    fd.Fd = -1;
-}
-
-template <typename TCloser>
-TBasicUniqueFd<TCloser>& TBasicUniqueFd<TCloser>::operator=(TBasicUniqueFd&& fd) noexcept {
-    Close();
-    Fd = fd.Fd;
-    fd.Fd = -1;
-    return *this;
-}
-
-template <typename TCloser>
-TBasicUniqueFd<TCloser>::~TBasicUniqueFd() {
-    try {
-        Close();
-    } catch (...) {
-        // destructor must be noexcept
-    }
-
-}
-
-template <typename TCloser>
-int TBasicUniqueFd<TCloser>::Get() const noexcept {
-    return Fd;
-}
-
-template <typename TCloser>
-int TBasicUniqueFd<TCloser>::Release() noexcept {
-    auto fd = Fd;
-    Fd = -1;
-    return fd;
-}
-
-template <typename TCloser>
-void TBasicUniqueFd<TCloser>::Reset(int fd) {
-    Close();
-    Fd = fd;
-}
-
-template <typename TCloser>
-void TBasicUniqueFd<TCloser>::Close() {
-    if (Fd > 0) {
-        TCloser::Close(Fd);
-    }
-}
-
 using TUniqueFd = TBasicUniqueFd<TFdCloser>;
-
-template <typename TCloser = TFdCloser, typename TSysCall, typename... TArgs>
-TBasicUniqueFd<TCloser> MakeUniqueFd(TSysCall&& sysCall, TArgs&&... args) {
-    return TBasicUniqueFd{std::invoke(std::forward<TSysCall>(sysCall), std::forward<TArgs>(args)...)};
-}

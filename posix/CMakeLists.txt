@@ -2,6 +2,7 @@ set(
     SRC
     file_descriptor/fd.cpp
     file_descriptor/unique_fd.cpp
+    file_descriptor/shared_fd.cpp
     file_descriptor/syscalls.cpp
     file_descriptor/fd_stream.cpp
     environ/environment_variable.cpp

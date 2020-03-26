@@ -93,18 +93,36 @@ TIFdStream& TSubprocess::Err() {
 }
 
 void TSubprocess::ForkExec(ECommunicationMode mode) {
-    std::pair<TUniqueFd, TUniqueFd> inFds;
-    std::pair<TUniqueFd, TUniqueFd> outFds;
-    std::pair<TUniqueFd, TUniqueFd> errFds;
+    std::pair<TSharedFd, TSharedFd> inFds;
+    std::pair<TSharedFd, TSharedFd> outFds;
+    std::pair<TSharedFd, TSharedFd> errFds;
+    {
+        std::pair<TSharedFd, TSharedFd> ptFds;
+        if (mode & ECommunicationMode::Pt) {
+            ptFds = NInternal::PtMasterSlave();
+        }
 
-    if (mode & ECommunicationMode::In) {
-        inFds = NInternal::Pipe();
-    }
-    if (mode & ECommunicationMode::Out) {
-        outFds = NInternal::Pipe();
-    }
-    if (mode & ECommunicationMode::Err) {
-        errFds = NInternal::Pipe();
+        if (mode & ECommunicationMode::In) {
+            if (mode == ECommunicationMode::InPt) {
+                inFds = ptFds;
+            } else {
+                inFds = NInternal::Pipe();
+            }
+        }
+        if (mode & ECommunicationMode::Out) {
+            if (mode == ECommunicationMode::OutPt) {
+                outFds = ptFds;
+            } else {
+                outFds = NInternal::Pipe();
+            }
+        }
+        if (mode & ECommunicationMode::Err) {
+            if (mode == ECommunicationMode::ErrPt) {
+                errFds = ptFds;
+            } else {
+                errFds = NInternal::Pipe();
+            }
+        }
     }
 
     if ((ChildPid = fork()) < 0) {

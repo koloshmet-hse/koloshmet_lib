@@ -1,6 +1,7 @@
 #include "syscalls.h"
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <cstdio>
 
@@ -25,4 +26,26 @@ std::pair<TUniqueFd, TUniqueFd> NInternal::Pipe() {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
     return {TUniqueFd{fds[0]}, TUniqueFd{fds[1]}};
+}
+
+std::pair<TSharedFd, TSharedFd> NInternal::PtMasterSlave() {
+    auto master = posix_openpt(O_RDWR | O_NOCTTY);
+    if (master < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    if (grantpt(master) < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    if (unlockpt(master) < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    const char* slaveName = ptsname(master);
+    if (slaveName == nullptr) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    auto slave = open(slaveName, O_RDWR);
+    if (slave < 0) {
+        throw std::system_error{std::error_code{errno, std::system_category()}};
+    }
+    return {TSharedFd{master}, TSharedFd{slave}};
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <posix/file_descriptor/shared_fd.h>
 #include <posix/file_descriptor/syscalls.h>
 
 #include <istream>
@@ -11,7 +12,7 @@
 template <typename TChar, typename TCloser>
 class TBasicIFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    TBasicIFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
+    TBasicIFdStreamBuf(TBasicSharedFd<TCloser> fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size{buffSize}
         , Fd{std::move(fd)}
@@ -60,8 +61,7 @@ public:
         return -1;
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
-        Fd.Reset();
+    void Open(TBasicSharedFd<TCloser> fd) {
         Fd = std::move(fd);
     }
 
@@ -75,20 +75,20 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return Fd;
     }
 
 private:
     std::unique_ptr<TChar[]> Buffer;
     std::size_t Size;
-    TBasicUniqueFd<TCloser> Fd;
+    TBasicSharedFd<TCloser> Fd;
 };
 
 template <typename TChar, typename TCloser>
 class TBasicOFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    TBasicOFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
+    TBasicOFdStreamBuf(TBasicSharedFd<TCloser> fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size(buffSize)
         , Fd{std::move(fd)}
@@ -146,8 +146,7 @@ public:
         return 0;
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
-        Fd.Reset();
+    void Open(TBasicSharedFd<TCloser> fd) {
         Fd = std::move(fd);
     }
 
@@ -161,20 +160,20 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return Fd;
     }
 
 private:
     std::unique_ptr<TChar[]> Buffer;
     std::size_t Size;
-    TBasicUniqueFd<TCloser> Fd;
+    TBasicSharedFd<TCloser> Fd;
 };
 
 template <typename TChar, typename TCloser>
 class TBasicFdStreamBuf : public std::basic_streambuf<TChar> {
 public:
-    explicit TBasicFdStreamBuf(TBasicUniqueFd<TCloser>&& fd, std::size_t buffSize)
+    explicit TBasicFdStreamBuf(TBasicSharedFd<TCloser> fd, std::size_t buffSize)
         : Buffer(std::make_unique<TChar[]>(buffSize))
         , Size(buffSize)
         , Fd{std::move(fd)}
@@ -250,8 +249,7 @@ public:
         return 0;
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
-        Fd.Reset();
+    void Open(TBasicSharedFd<TCloser> fd) {
         Fd = std::move(fd);
     }
 
@@ -265,20 +263,20 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return Fd;
     }
 
 private:
     std::unique_ptr<TChar[]> Buffer;
     std::size_t Size;
-    TBasicUniqueFd<TCloser> Fd;
+    TBasicSharedFd<TCloser> Fd;
 };
 
 template <typename TChar, typename TCloser = TFdCloser>
 class TBasicIFdStream : public std::basic_istream<TChar> {
 public:
-    explicit TBasicIFdStream(TBasicUniqueFd<TCloser>&& fd)
+    explicit TBasicIFdStream(TBasicSharedFd<TCloser> fd)
         : std::basic_istream<TChar>{nullptr}
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
@@ -298,7 +296,7 @@ public:
         return *this;
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
+    void Open(TBasicSharedFd<TCloser> fd) {
         StreamBuf.Open(std::move(fd));
     }
 
@@ -312,7 +310,7 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return StreamBuf.GetFd();
     }
 
@@ -323,7 +321,7 @@ private:
 template <typename TChar, typename TCloser = TFdCloser>
 class TBasicOFdStream : public std::basic_ostream<TChar> {
 public:
-    explicit TBasicOFdStream(TBasicUniqueFd<TCloser>&& fd)
+    explicit TBasicOFdStream(TBasicSharedFd<TCloser> fd)
         : std::basic_ostream<TChar>{nullptr}
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
@@ -347,7 +345,7 @@ public:
         this->flush();
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
+    void Open(TBasicSharedFd<TCloser> fd) {
         this->flush();
         StreamBuf.Open(std::move(fd));
     }
@@ -363,7 +361,7 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return StreamBuf.GetFd();
     }
 
@@ -374,7 +372,7 @@ private:
 template <typename TChar, typename TCloser = TFdCloser>
 class TBasicFdStream : public std::basic_iostream<TChar> {
 public:
-    explicit TBasicFdStream(TBasicUniqueFd<TCloser>&& fd)
+    explicit TBasicFdStream(TBasicSharedFd<TCloser> fd)
         : std::basic_iostream<TChar>{nullptr}
         , StreamBuf{std::move(fd), NInternal::BuffSize()}
     {
@@ -398,7 +396,7 @@ public:
         this->flush();
     }
 
-    void Open(TBasicUniqueFd<TCloser>&& fd) {
+    void Open(TBasicSharedFd<TCloser> fd) {
         this->flush();
         StreamBuf.Open(std::move(fd));
     }
@@ -414,7 +412,7 @@ public:
     }
 
     [[nodiscard]]
-    const TBasicUniqueFd<TCloser>& GetFd() const noexcept {
+    const IFd& GetFd() const {
         return StreamBuf.GetFd();
     }
 
