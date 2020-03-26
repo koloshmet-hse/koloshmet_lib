@@ -43,7 +43,7 @@ std::pair<TSharedFd, TSharedFd> NInternal::PtMasterSlave() {
     if (slaveName == nullptr) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
-    auto slave = open(slaveName, O_RDWR);
+    auto slave = open(slaveName, O_RDWR | O_NOCTTY);
     if (slave < 0) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     }
