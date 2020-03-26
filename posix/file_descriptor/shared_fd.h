@@ -2,6 +2,8 @@
 
 #include <posix/file_descriptor/unique_fd.h>
 
+#include <memory>
+
 template <typename TCloser>
 class TBasicSharedFd : public IFd {
 public:
