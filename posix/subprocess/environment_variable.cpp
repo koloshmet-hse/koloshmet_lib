@@ -4,7 +4,7 @@
 
 #include <util/exception/exception.h>
 
-TEnvVar::TEnvVar(std::string key)
+NSubprocess::TEnvVar::TEnvVar(std::string key)
     : EnvVar{std::move(key)}
 {
     if (auto value = std::getenv(EnvVar.c_str()); value != nullptr) {
@@ -15,21 +15,21 @@ TEnvVar::TEnvVar(std::string key)
     }
 }
 
-TEnvVar::TEnvVar(std::string key, std::string_view value)
+NSubprocess::TEnvVar::TEnvVar(std::string key, std::string_view value)
         : EnvVar{std::move(key)}
 {
     EnvVar += '=';
     EnvVar += value;
 }
 
-TEnvVar::operator std::string() && noexcept {
+NSubprocess::TEnvVar::operator std::string() && noexcept {
     return std::move(EnvVar);
 }
 
-TEnvVar::operator std::string() const& {
+NSubprocess::TEnvVar::operator std::string() const& {
     return EnvVar;
 }
 
-TEnvVar::operator std::string_view() const {
+NSubprocess::TEnvVar::operator std::string_view() const {
     return EnvVar;
 }
