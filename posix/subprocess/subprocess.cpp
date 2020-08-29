@@ -1,6 +1,7 @@
 #include "subprocess.h"
 
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <csignal>
 
@@ -103,21 +104,22 @@ void TSubprocess::ForkExec(ECommunicationMode mode) {
         }
 
         if (mode & ECommunicationMode::In) {
-            if (mode == ECommunicationMode::InPt) {
+            if (mode & ECommunicationMode::InPt) {
                 inFds = ptFds;
+                std::swap(inFds.first, inFds.second);
             } else {
                 inFds = NInternal::Pipe();
             }
         }
         if (mode & ECommunicationMode::Out) {
-            if (mode == ECommunicationMode::OutPt) {
+            if (mode & ECommunicationMode::OutPt) {
                 outFds = ptFds;
             } else {
                 outFds = NInternal::Pipe();
             }
         }
         if (mode & ECommunicationMode::Err) {
-            if (mode == ECommunicationMode::ErrPt) {
+            if (mode & ECommunicationMode::ErrPt) {
                 errFds = ptFds;
             } else {
                 errFds = NInternal::Pipe();
@@ -128,6 +130,10 @@ void TSubprocess::ForkExec(ECommunicationMode mode) {
     if ((ChildPid = fork()) < 0) {
         throw std::system_error{std::error_code{errno, std::system_category()}};
     } else if (ChildPid == 0) {
+        setsid();
+        if (ioctl(inFds.first.Get(), TIOCSCTTY, nullptr) < 0) {
+            throw std::system_error{std::error_code{errno, std::system_category()}};
+        }
         {
             auto [inRead, inWrite] = std::move(inFds);
             if (mode & ECommunicationMode::In && dup2(inRead.Get(), STDIN_FILENO) < 0) {

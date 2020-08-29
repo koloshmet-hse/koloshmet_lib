@@ -17,6 +17,6 @@ std::string ToUpper(std::string_view str) {
     return res;
 }
 
-TSlice<std::string_view, NInternal::TIsDelim> Split(std::string_view seq, std::string_view delim) {
-    return TSlice{std::move(seq), NInternal::TIsDelim{delim}};
+TSlice<std::string_view, std::string_view> Split(std::string_view seq, std::string_view delim) {
+    return {seq, delim};
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <posix/file_descriptor/fd_stream.h>
-#include <posix/environ/environment_variable.h>
+#include <posix/subprocess/environment_variable.h>
 
 #include <filesystem>
 
@@ -51,7 +51,7 @@ public:
         , ErrStream{}
         , ChildPid{-1}
     {
-        if constexpr (FindType<TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
+        if constexpr (FindType<NSubprocess::TEnvVar, std::decay_t<TArgs>...>() == NPOS) {
             (Arguments.emplace_back(std::forward<TArgs>(args)), ...);
         } else {
             SeparateArgsFromEnvs(std::forward<TArgs>(args)...);
@@ -131,11 +131,11 @@ public:
 
 private:
     template <typename T>
-    using IsEnvVar = std::is_same<std::decay_t<T>, TEnvVar>;
+    using IsEnvVar = std::is_same<std::decay_t<T>, NSubprocess::TEnvVar>;
 
     template <typename TCur, typename... TOthers>
     void SeparateArgsFromEnvs(TCur&& cur, TOthers&&... others) {
-        if constexpr (std::is_same_v<std::decay_t<TCur>, TEnvVar>) {
+        if constexpr (std::is_same_v<std::decay_t<TCur>, NSubprocess::TEnvVar>) {
             static_assert(AllOf<IsEnvVar, TCur, TOthers...>(), "Pass env vars after args to subprocess");
             EnvVars.emplace_back(std::forward<TCur>(cur));
             EnvVars.emplace_back(std::forward<TOthers>(others)...);
