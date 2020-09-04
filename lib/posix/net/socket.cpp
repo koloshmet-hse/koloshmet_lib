@@ -2,7 +2,7 @@
 
 #include <sys/socket.h>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 #include <system_error>
 #include <sys/un.h>

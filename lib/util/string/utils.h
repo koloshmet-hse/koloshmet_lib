@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/util/container/slice.h>
+#include <util/container/slice.h>
 #include <charconv>
 
 #include <string>

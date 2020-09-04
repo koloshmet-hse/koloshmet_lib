@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string_view>
 
-#include <lib/util/type/utils.h>
+#include <util/type/utils.h>
 
 class TException : public std::exception {
     template <typename T>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/util/opt/opt.h>
+#include <util/opt/opt.h>
 
 #include <variant>
 #include <unordered_map>
@@ -8,7 +8,7 @@
 
 #include <string_view>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 #include <iomanip>
 #include <iostream>

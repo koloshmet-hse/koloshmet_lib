@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lib/posix/net/socket.h>
-#include <lib/async/stop_token/stop_token.h>
+#include <posix/net/socket.h>
+#include <async/stop_token/stop_token.h>
 
 #include <filesystem>
 

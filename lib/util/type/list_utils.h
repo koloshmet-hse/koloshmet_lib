@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/util/type/type_list.h>
+#include <util/type/type_list.h>
 
 #include <utility>
 

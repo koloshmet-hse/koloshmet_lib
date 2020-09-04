@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/posix/net/socket.h>
+#include <posix/net/socket.h>
 
 #include <unordered_map>
 #include <chrono>

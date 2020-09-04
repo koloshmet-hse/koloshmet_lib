@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lib/posix/file_descriptor/shared_fd.h>
-#include <lib/posix/file_descriptor/syscalls.h>
+#include <posix/file_descriptor/shared_fd.h>
+#include <posix/file_descriptor/syscalls.h>
 
 #include <istream>
 #include <ostream>

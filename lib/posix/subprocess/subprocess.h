@@ -1,13 +1,12 @@
 #pragma once
 
-#include <lib/posix/file_descriptor/fd_stream.h>
-#include <lib/posix/subprocess/environment_variable.h>
+#include <posix/file_descriptor/fd_stream.h>
+#include <posix/subprocess/environment_variable.h>
+
+#include <util/type/list_utils.h>
+#include <util/exception/exception.h>
 
 #include <filesystem>
-
-#include <lib/util/type/list_utils.h>
-#include <lib/util/exception/exception.h>
-
 #include <string>
 #include <vector>
 #include <optional>

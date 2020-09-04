@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 NSubprocess::TEnvVar::TEnvVar(std::string key)
     : EnvVar{std::move(key)}

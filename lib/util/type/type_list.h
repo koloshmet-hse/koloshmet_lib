@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <array>
 
-#include <lib/util/global/constants.h>
+#include <util/global/constants.h>
 
 namespace NInternal {
     template <std::size_t Index, typename... TTypes>

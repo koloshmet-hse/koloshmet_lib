@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/util/opt/command.h>
+#include <util/opt/command.h>
 
 #include <filesystem>
 

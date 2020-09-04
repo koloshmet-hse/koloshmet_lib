@@ -2,8 +2,8 @@
 
 #include <string_view>
 
-#include <lib/util/type/list_utils.h>
-#include <lib/util/exception/exception.h>
+#include <util/type/list_utils.h>
+#include <util/exception/exception.h>
 
 namespace NInternal {
     template <typename T>

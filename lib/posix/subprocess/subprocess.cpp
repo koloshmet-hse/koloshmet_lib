@@ -5,9 +5,9 @@
 #include <sys/wait.h>
 #include <csignal>
 
-#include <lib/util/string/utils.h>
+#include <util/string/utils.h>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 TSubprocess::TSubprocess(TSubprocess&& other) noexcept
     : Executable(std::move(other.Executable))

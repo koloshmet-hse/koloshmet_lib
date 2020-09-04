@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/posix/file_descriptor/unique_fd.h>
+#include <posix/file_descriptor/unique_fd.h>
 
 #include <memory>
 
@@ -11,11 +11,11 @@ public:
         : Fd{std::make_shared<TBasicUniqueFd<TCloser>>(fd)}
     {}
 
-    /* implicit */ TBasicSharedFd(TNullFd = NULL_FD) noexcept
+    explicit(false) TBasicSharedFd(TNullFd = NULL_FD) noexcept
         : Fd{nullptr}
     {}
 
-    /* implicit */ TBasicSharedFd(TBasicUniqueFd<TCloser>&& fd)
+    explicit(false) TBasicSharedFd(TBasicUniqueFd<TCloser>&& fd)
         : Fd{fd ? std::make_shared<TBasicUniqueFd<TCloser>>(std::move(fd)) : nullptr}
     {}
 

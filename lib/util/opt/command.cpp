@@ -1,6 +1,6 @@
 #include "command.h"
 
-#include <lib/util/string/utils.h>
+#include <util/string/utils.h>
 
 std::size_t TCommand::Size() const {
     return Parameters.size();

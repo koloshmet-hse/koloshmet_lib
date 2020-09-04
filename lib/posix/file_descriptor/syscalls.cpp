@@ -5,7 +5,7 @@
 
 #include <cstdio>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 #include <array>
 
 size_t NInternal::BuffSize() {

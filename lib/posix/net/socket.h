@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/posix/file_descriptor/fd_stream.h>
+#include <posix/file_descriptor/fd_stream.h>
 
 #include <any>
 #include <filesystem>

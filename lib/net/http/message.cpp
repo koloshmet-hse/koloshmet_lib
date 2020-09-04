@@ -1,8 +1,8 @@
 #include "message.h"
 
-#include <lib/util/string/utils.h>
+#include <util/string/utils.h>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 #include <vector>
 

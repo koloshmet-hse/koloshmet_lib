@@ -1,7 +1,7 @@
 #include "socket_pool.h"
 
 #include <sys/poll.h>
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 #include <vector>
 

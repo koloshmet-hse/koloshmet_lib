@@ -1,4 +1,4 @@
-#include <lib/posix/file_descriptor/shared_fd.h>
+#include <posix/file_descriptor/shared_fd.h>
 
 namespace NInternal {
     std::size_t BuffSize();

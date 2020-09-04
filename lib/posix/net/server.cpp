@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include <sys/un.h>
 
-#include <lib/util/exception/exception.h>
+#include <util/exception/exception.h>
 
 #include <cstring>
 

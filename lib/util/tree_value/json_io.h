@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/util/tree_value/tree_value.h>
+#include <util/tree_value/tree_value.h>
 
 #include <istream>
 #include <ostream>
