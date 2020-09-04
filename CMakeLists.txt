@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.12)
-project(koloshmet_lib)
+project(koloshmet_lib VERSION 0.1)
 
-set(CMAKE_CXX_STANDARD 20)
-
-add_compile_options(-Werror -Wall -Wextra)
-
-option(K_UTIL_ONLY "Build only util" ON)
-
-add_subdirectory(util)
-if(NOT K_UTIL_ONLY)
-    add_subdirectory(posix)
-    add_subdirectory(net)
-    add_subdirectory(async)
+if(NOT DEFINED K_BUILD_POSIX)
+    set(K_BUILD_POSIX ON)
 endif()
+
+if(NOT DEFINED K_BUILD_NET)
+    set(K_BUILD_NET ON)
+endif()
+
+add_subdirectory(lib)
+add_subdirectory(tests)

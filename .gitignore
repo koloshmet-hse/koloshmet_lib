@@ -1,4 +1,5 @@
 
 .idea/*
 cmake-build-debug/*
-test.cpp
+.DS_Store
+tests/test.cpp
