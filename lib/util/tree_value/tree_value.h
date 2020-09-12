@@ -18,19 +18,19 @@ public:
         : Value(nullptr)
     {}
 
-    /* implicit */ TTreeValue(bool b)
+    explicit(false) TTreeValue(bool b)
         : Value(std::make_unique<TVariant>(b))
     {}
 
-    /* implicit */ TTreeValue(long long v)
+    explicit(false) TTreeValue(long long v)
         : Value(std::make_unique<TVariant>(v))
     {}
 
-    /* implicit */ TTreeValue(double d)
+    explicit(false) TTreeValue(double d)
         : Value(std::make_unique<TVariant>(d))
     {}
 
-    /* implicit */ TTreeValue(std::string str)
+    explicit(false) TTreeValue(std::string str)
         : Value(std::make_unique<TVariant>(std::move(str)))
     {}
 

@@ -12,6 +12,7 @@ set(
     io/binary_io.cpp
     container/slice.cpp
     container/utils.cpp
+    container/sorted_array.cpp
     opt/opt.cpp
     opt/command.cpp
     opt/options.cpp
